@@ -1,14 +1,16 @@
-from flask import Flask, request
+from flask import Flask, request, render_template
 from models import db, Trial, Data
+from sqlalchemy.exc import SQLAlchemyError
 
 app = Flask(__name__)
+# TODO migrate config to file and DB to GCloud
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://caleb@localhost:5432/ppg'
 db.init_app(app)
 
 
 @app.route('/')
 def home():
-    return 'Hello, World!'
+    return render_template('index.html')
 
 
 @app.route('/trials', methods=['POST'])
@@ -22,7 +24,7 @@ def create_trial():
     try:
         db.session.commit()
         return str(trial.id)
-    except Exception as e:
+    except SQLAlchemyError as e:
         print(e)
         return "Failed", 500
 
@@ -41,7 +43,7 @@ def save_data(trial_id):
     try:
         db.session.commit()
         return "Ok"
-    except Exception as e:
+    except SQLAlchemyError as e:
         print(e)
         return "Failed", 500
 
