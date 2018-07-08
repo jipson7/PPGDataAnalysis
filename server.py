@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template
 from models import db, Trial, Data
 from sqlalchemy.exc import SQLAlchemyError
+from flask import jsonify
 
 app = Flask(__name__)
 # TODO migrate config to file and DB to GCloud
@@ -27,6 +28,20 @@ def create_trial():
     except SQLAlchemyError as e:
         print(e)
         return "Failed", 500
+
+
+@app.route('/trials', methods=['GET'])
+def get_trials():
+    trials_result = Trial.query.all()
+    trials = [t.serialized for t in trials_result]
+    return jsonify(trials=trials)
+
+
+@app.route('/trials/<int:trial_id>', methods=['GET'])
+def get_trial_data(trial_id):
+    trial = Trial.query.get(trial_id)
+    data = [d.serialized for d in trial.data]
+    return jsonify(data=data)
 
 
 @app.route('/trials/<int:trial_id>', methods=['POST'])
