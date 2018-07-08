@@ -37,14 +37,14 @@ def get_trials():
     return jsonify(trials=trials)
 
 
-@app.route('/trials/<int:trial_id>', methods=['GET'])
+@app.route('/trials/<int:trial_id>/data', methods=['GET'])
 def get_trial_data(trial_id):
     trial = Trial.query.get(trial_id)
     data = [d.serialized for d in trial.data]
     return jsonify(data=data)
 
 
-@app.route('/trials/<int:trial_id>', methods=['POST'])
+@app.route('/trials/<int:trial_id>/data', methods=['POST'])
 def save_data(trial_id):
     json = request.get_json()
     reading = json.get('data')
