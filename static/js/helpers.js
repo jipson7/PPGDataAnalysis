@@ -1,16 +1,3 @@
-function dataPointsGenerator(limit) {
-    var y = 0;
-    var dataPoints = [];
-    for (var i = 0; i < limit; i += 1) {
-        y += Math.round(5 + Math.random() * (-5 - 5));
-        dataPoints.push({
-            x: i,
-            y: y
-        });
-    }
-    return dataPoints;
-}
-
 var _CHARTS = [];
 
 function syncHandler(e) {
