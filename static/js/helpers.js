@@ -22,9 +22,6 @@ function syncHandler(e) {
             chart.options.axisX.viewportMinimum = e.axisX[0].viewportMinimum;
             chart.options.axisX.viewportMaximum = e.axisX[0].viewportMaximum;
 
-            // chart.options.axisY.viewportMinimum = e.axisY[0].viewportMinimum;
-            // chart.options.axisY.viewportMaximum = e.axisY[0].viewportMaximum;
-
             chart.render();
 
         }
