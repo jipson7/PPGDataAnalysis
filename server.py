@@ -39,9 +39,40 @@ def get_trials():
 
 @app.route('/trials/<int:trial_id>/data', methods=['GET'])
 def get_trial_data(trial_id):
-    trial = Trial.query.get(trial_id)
-    data = [d.serialized for d in trial.data]
+    device = request.args.get('device')
+    data_query = Data.query.filter_by(trial_id=trial_id)
+
+    if device:
+        data_query = data_query.filter_by(device=device)
+
+    data = [datum.serialized for datum in data_query.all()]
+
     return jsonify(data=data)
+
+
+@app.route('/trials/<int:trial_id>/chart', methods=['GET'])
+def get_chart_data(trial_id):
+    device = request.args.get('device')
+    data_type = request.args.get('data')
+    data_query = Data.query.filter_by(trial_id=trial_id)
+
+    if device:
+        data_query = data_query.filter_by(device=device)
+
+    data = data_query.all()
+
+
+    result = []
+
+    for datum in data:
+        datum = datum.serialized
+        reading = datum['reading']
+        if data_type in reading:
+            result.append({
+                "x": datum.get("timestamp"),
+                "y": reading.get(data_type)
+            })
+    return jsonify(data=result)
 
 
 @app.route('/trials/<int:trial_id>/data', methods=['POST'])
