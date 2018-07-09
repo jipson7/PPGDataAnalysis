@@ -9,6 +9,7 @@ class Trial(db.Model):
     created = db.Column(db.TIMESTAMP)
     user = db.Column(db.JSON)
     info = db.Column(db.TEXT)
+    data = db.relationship("Data", order_by="Data.timestamp")
 
     def __init__(self, user, info):
         self.user = user
@@ -30,7 +31,6 @@ class Data(db.Model):
     reading = db.Column(db.JSON)
     device = db.Column(db.Integer)
     trial_id = db.Column(db.Integer, db.ForeignKey('trial.id'))
-    trial = db.relationship(Trial, backref="data")
 
     def __init__(self, timestamp, reading, device, trial_id):
         self.timestamp = datetime.datetime.fromtimestamp(timestamp / 1000.0)  # from ms

@@ -40,16 +40,7 @@ def get_trials():
 
 @app.route('/trials/<int:trial_id>/data', methods=['GET'])
 def get_trial_data(trial_id):
-    device = request.args.get('device')
-    data_query = Data.query.filter_by(trial_id=trial_id)
-
-    if device:
-        data_query = data_query.filter_by(device=device)
-
-    data = data_query.order_by(desc(Data.timestamp)).all()
-
-    data = [datum.serialized for datum in data]
-
+    data = [x.serialized for x in Trial.query.get(trial_id).data]
     return jsonify(data=data)
 
 
