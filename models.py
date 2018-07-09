@@ -41,7 +41,7 @@ class Data(db.Model):
     @property
     def serialized(self):
         return {
-            'timestamp': self.timestamp,  # to ms
+            'timestamp': int(self.timestamp.timestamp() * 1000),  # to ms
             'reading': self.reading,
             'device': self.device
         }
