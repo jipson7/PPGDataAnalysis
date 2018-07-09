@@ -6,6 +6,7 @@ db = SQLAlchemy()
 
 class Trial(db.Model):
     id = db.Column(db.INTEGER, primary_key=True)
+    created = db.Column(db.TIMESTAMP)
     user = db.Column(db.JSON)
     info = db.Column(db.TEXT)
 
@@ -18,7 +19,8 @@ class Trial(db.Model):
         return {
             'id': self.id,
             'user': self.user,
-            'info': self.info
+            'info': self.info,
+            'created': int(self.created.timestamp() * 1000)
         }
 
 
@@ -31,7 +33,7 @@ class Data(db.Model):
     trial = db.relationship(Trial, backref="data")
 
     def __init__(self, timestamp, reading, device, trial_id):
-        self.timestamp = datetime.datetime.fromtimestamp(timestamp / 1000.0)
+        self.timestamp = datetime.datetime.fromtimestamp(timestamp / 1000.0)  # from ms
         self.reading = reading
         self.device = device
         self.trial_id = trial_id
@@ -39,7 +41,7 @@ class Data(db.Model):
     @property
     def serialized(self):
         return {
-            'timestamp': int(self.timestamp.timestamp() * 1000),
+            'timestamp': self.timestamp,  # to ms
             'reading': self.reading,
             'device': self.device
         }
