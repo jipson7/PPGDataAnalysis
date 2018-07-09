@@ -1,6 +1,7 @@
-from flask import Flask, request, render_template
+from flask import Flask, request
 from models import db, Trial, Data
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import desc
 from flask import jsonify
 
 app = Flask(__name__)
@@ -45,7 +46,9 @@ def get_trial_data(trial_id):
     if device:
         data_query = data_query.filter_by(device=device)
 
-    data = [datum.serialized for datum in data_query.all()]
+    data = data_query.order_by(desc(Data.timestamp)).all()
+
+    data = [datum.serialized for datum in data]
 
     return jsonify(data=data)
 
@@ -59,8 +62,7 @@ def get_chart_data(trial_id):
     if device:
         data_query = data_query.filter_by(device=device)
 
-    data = data_query.all()
-
+    data = data_query.order_by(desc(Data.timestamp)).all()
 
     result = []
 
