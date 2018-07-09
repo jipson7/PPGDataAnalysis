@@ -29,6 +29,7 @@ class Data(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.TIMESTAMP)
     reading = db.Column(db.JSON)
+    algorithms = db.Column(db.JSON)
     device = db.Column(db.Integer)
     trial_id = db.Column(db.Integer, db.ForeignKey('trial.id'))
 
@@ -43,5 +44,6 @@ class Data(db.Model):
         return {
             'timestamp': int(self.timestamp.timestamp() * 1000),  # to ms
             'reading': self.reading,
+            'algorithms': self.algorithms,
             'device': self.device
         }
