@@ -5,6 +5,45 @@ import pandas as pd
 db = SQLAlchemy()
 
 
+def extract_sensor_data(data, motion=False):
+    index = []
+    columns = ['red', 'ir', 'oxygen', 'hr', 'ratio', 'correlation']
+    motion_columns = ['gyro_x', 'gyro_y', 'gyro_z', 'accel_x', 'accel_y', 'accel_z']
+    rows = []
+    for datum in data:
+        index.append(datum.timestamp)
+        reading = datum.reading
+        algos = datum.algorithms
+        row = [
+            reading['red'],
+            reading['ir']
+        ]
+        if algos is not None:
+            enhanced = algos['enhanced']
+            row += [
+                enhanced['oxygen'] if enhanced['oxygen_valid'] == 1 else None,
+                enhanced['hr'] if enhanced['hr_valid'] == 1 else None,
+                enhanced['ratio'],
+                enhanced['correlation']
+            ]
+        else:
+            row += [None] * 4
+        if motion:
+            gyro = reading['gyro']
+            accel = reading['accel']
+            row += [
+                gyro['x'],
+                gyro['y'],
+                gyro['z'],
+                accel['x'],
+                accel['y'],
+                accel['z']
+            ]
+        rows.append(row)
+    if motion:
+        columns += motion_columns
+    return pd.DataFrame(rows, index=index, columns=columns)
+
 class Trial(db.Model):
     id = db.Column(db.INTEGER, primary_key=True)
     created = db.Column(db.TIMESTAMP)
@@ -33,13 +72,11 @@ class Trial(db.Model):
 
     @property
     def df_wrist(self):
-        data = self.wrist_data
-        print(data[0].serialized)
-        return "Loading"
+        return extract_sensor_data(self.wrist_data, motion=True)
 
     @property
     def df_reflective(self):
-        return 0
+        return extract_sensor_data(self.reflective_data, motion=False)
 
     @property
     def df_transitive(self):
