@@ -1,4 +1,4 @@
-from server import app, db, Data
+from server import app, db, Trial
 from itertools import islice
 from subprocess import run, PIPE
 import json
@@ -6,12 +6,9 @@ import json
 
 def apply_algorithms_to_trial(trial_id):
     with app.app_context():
-        base_query = Data.query.filter_by(trial_id=trial_id).order_by(Data.timestamp)
-        wrist_data = base_query.filter_by(device=0).all()
-        apply_algo_to_data_list(wrist_data)
-
-        fingertip_data = base_query.filter_by(device=1).all()
-        apply_algo_to_data_list(fingertip_data)
+        trial = Trial.query.get(trial_id)
+        apply_algo_to_data_list(trial.wrist_data)
+        apply_algo_to_data_list(trial.reflective_data)
 
 
 def apply_algo_to_data_list(data_list):

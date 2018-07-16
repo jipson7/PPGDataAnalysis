@@ -38,22 +38,20 @@ def get_trials():
     return jsonify(trials=trials)
 
 
-@app.route('/trials/<int:trial_id>/data', methods=['GET'])
-def get_trial_data(trial_id):
-    data = [x.serialized for x in Trial.query.get(trial_id).data]
-    return jsonify(data=data)
-
-
 @app.route('/trials/<int:trial_id>/chart', methods=['GET'])
 def get_chart_data(trial_id):
-    device = request.args.get('device')
+    device = int(request.args.get('device'))
     data_type = request.args.get('data')
-    data_query = Data.query.filter_by(trial_id=trial_id)
+    trial = Trial.query.get(trial_id)
 
-    if device:
-        data_query = data_query.filter_by(device=device)
-
-    data = data_query.order_by(desc(Data.timestamp)).all()
+    if device == 0:
+        data = trial.wrist_data
+    elif device == 1:
+        data = trial.reflective_data
+    elif device == 2:
+        data = trial.transitive_data
+    else:
+        raise Exception("Invalid device type set in get parameter, select from 0, 1, or 2")
 
     result = []
 
