@@ -66,7 +66,7 @@ class Trial(db.Model):
         }
 
     def __str__(self):
-        return str(self.id) + " " + \
+        return str(self.id) + " - " + \
                self.user['name'] + " - " + \
                self.info + " - " + \
                str(self.created)
@@ -81,7 +81,19 @@ class Trial(db.Model):
 
     @property
     def df_transitive(self):
-        return 0
+        data = self.transitive_data
+        index = []
+        columns = ['oxygen', 'hr']
+        rows = []
+        for datum in data:
+            index.append(datum.timestamp)
+            reading = datum.reading
+            row = [
+                reading['oxygen'] if reading['oxygen_valid'] else None,
+                reading['hr'] if reading['hr_valid'] else None
+            ]
+            rows.append(row)
+        return pd.DataFrame(rows, index=index, columns=columns)
 
     @property
     def wrist_data(self):
