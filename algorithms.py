@@ -12,7 +12,6 @@ def apply_algorithms_to_trial(trial_id):
 
 
 def apply_algo_to_data_list(data_list):
-
     for window in windowized(data_list):
         last_data = window[-1]
         red_window = [str(x.reading.get('red')) for x in window]

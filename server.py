@@ -1,13 +1,17 @@
 from flask import Flask, request
 from models import db, Trial, Data
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import desc
+import logging
 from flask import jsonify
 
 app = Flask(__name__)
 # TODO migrate config to file and DB to GCloud
 app.config.from_object('config')
 db.init_app(app)
+
+# Set log level to error
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
 
 
 @app.route('/')

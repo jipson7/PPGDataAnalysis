@@ -44,9 +44,10 @@ def extract_sensor_data(data, motion=False):
         columns += motion_columns
     return pd.DataFrame(rows, index=index, columns=columns)
 
+
 class Trial(db.Model):
     id = db.Column(db.INTEGER, primary_key=True)
-    created = db.Column(db.TIMESTAMP)
+    created = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow)
     user = db.Column(db.JSON)
     info = db.Column(db.TEXT)
     data = db.relationship("Data", order_by="Data.timestamp", lazy='dynamic')
