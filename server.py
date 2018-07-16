@@ -6,7 +6,7 @@ from flask import jsonify
 
 app = Flask(__name__)
 # TODO migrate config to file and DB to GCloud
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://caleb@localhost:5432/ppg'
+app.config.from_object('config')
 db.init_app(app)
 
 

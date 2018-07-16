@@ -34,3 +34,4 @@ def windowized(seq, n=100):
     for elem in it:
         result = result[1:] + (elem,)
         yield result
+
