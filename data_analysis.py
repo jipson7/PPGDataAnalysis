@@ -2,7 +2,6 @@ import datetime
 import pandas as pd
 import numpy as np
 from itertools import islice
-from functools import reduce
 
 
 def get_common_endpoints(df1, df2):
