@@ -2,6 +2,8 @@ import datetime
 import pandas as pd
 import numpy as np
 from itertools import islice
+from sklearn.metrics import accuracy_score, confusion_matrix
+import matplotlib.pyplot as plt
 
 
 def get_common_endpoints(df1, df2):
@@ -50,3 +52,16 @@ def windowized(seq, n=100):
     for elem in it:
         result = result[1:] + (elem,)
         yield result
+
+
+def plot_confusion_matrix(y_true, y_pred):
+    labels = sorted(list(set(y_true) | set(y_pred)))
+    cm = confusion_matrix(y_true, y_pred, labels)
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(cm)
+    fig.colorbar(cax)
+    ax.set_xticklabels([''] + labels)
+    ax.set_yticklabels([''] + labels)
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
