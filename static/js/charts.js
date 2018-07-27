@@ -102,6 +102,7 @@ function createChart(data, title, containerId) {
         rangeChanged: syncHandler
     });
     chart.render();
+    _CHARTS.push(chart);
     return chart;
 }
 
