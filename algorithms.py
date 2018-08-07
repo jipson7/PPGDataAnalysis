@@ -3,6 +3,7 @@ from subprocess import run, PIPE
 import json
 from data_analysis import windowized
 
+
 def apply_algorithms_to_trial(trial_id):
     with app.app_context():
         trial = Trial.query.get(trial_id)

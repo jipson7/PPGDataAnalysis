@@ -4,6 +4,7 @@ import numpy as np
 from itertools import islice
 from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
 
 
 def get_common_endpoints(df1, df2):
@@ -65,3 +66,18 @@ def plot_confusion_matrix(y_true, y_pred):
     ax.set_yticklabels([''] + labels)
     plt.xlabel('Predicted')
     plt.ylabel('True')
+
+
+def print_label_counts(y):
+    from collections import Counter
+    x = Counter(y)
+    for label, count in x.items():
+        print("Label: {}, Count: {}".format(label, count))
+
+
+def analyze_results(y_true, y_predicted):
+    accuracy = accuracy_score(y_true, y_predicted)
+    print("Accuracy: {}".format(accuracy))
+
+    plot_confusion_matrix(y_true, y_predicted)
+    plt.show()
