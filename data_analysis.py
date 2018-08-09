@@ -4,7 +4,6 @@ import numpy as np
 from itertools import islice
 from sklearn.metrics import accuracy_score, confusion_matrix
 import matplotlib.pyplot as plt
-from sklearn.metrics import accuracy_score
 
 
 def get_common_endpoints(df1, df2):
@@ -81,3 +80,15 @@ def analyze_results(y_true, y_predicted):
 
     plot_confusion_matrix(y_true, y_predicted)
     plt.show()
+
+
+def split_training_data(X, y, ratio=0.66):
+    data_count = X.shape[0]
+    train_size = int(data_count * ratio)
+
+    X_train = X[:train_size]
+    y_train = y[:train_size]
+    X_test = X[train_size:]
+    y_test = y[:train_size]
+
+    return X_train, y_train, X_test, y_test
