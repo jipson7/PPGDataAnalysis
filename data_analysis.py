@@ -89,6 +89,6 @@ def split_training_data(X, y, ratio=0.66):
     X_train = X[:train_size]
     y_train = y[:train_size]
     X_test = X[train_size:]
-    y_test = y[:train_size]
+    y_test = y[train_size:]
 
     return X_train, y_train, X_test, y_test
