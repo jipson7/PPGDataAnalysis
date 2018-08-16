@@ -28,20 +28,21 @@ def normalize_timestamps(df1, df2):
     return new_df1, new_df2
 
 
-def windowize_data(X, y, size=100):
-    def window(iterable):
-        i = iter(iterable)
-        win = []
-        for e in range(0, size):
-            win.append(next(i))
+def window(iterable, size=100):
+    i = iter(iterable)
+    win = []
+    for e in range(0, size):
+        win.append(next(i))
+    yield win
+    for e in i:
+        win = win[1:] + [e]
         yield win
-        for e in i:
-            win = win[1:] + [e]
-            yield win
 
+
+def windowize_data(X, y, size=100):
     # Flatten columns wise
     X_windowed = [np.array(i).flatten(order='F') for i in window(X)]
-    labels = [i[-1] for i in window(y)]
+    labels = [i[-1] for i in window(y, size)]
     return np.array(X_windowed), np.array(labels)
 
 

@@ -60,7 +60,7 @@ def run_random_forest(X_train, y_train, X_test, y_test):
 
 if __name__ == '__main__':
     list_trials()
-    default_trial = 13
+    default_trial = 15
     devices = load_devices(default_trial)
 
     X_train, y_train, X_test, y_test = \
