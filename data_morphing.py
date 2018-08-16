@@ -67,15 +67,22 @@ def split_training_data(X, y, ratio=0.66):
 class Experiment(object):
 
     @staticmethod
-    def oxygen_prediction(wrist=None, transitive=None):
+    def oxygen_classification(wrist=None, oxygen_device=None, round_to=1):
         print("\nPrepping Oxygen Prediction dataset...")
-        if wrist is None or transitive is None:
+        if wrist is None or oxygen_device is None:
             raise ValueError("None value passed to data prep method")
-        df_wrist_norm, df_transitive_norm = normalize_timestamps(wrist, transitive)
+        df_wrist_norm, df_transitive_norm = normalize_timestamps(wrist, oxygen_device)
         X = df_wrist_norm[['red', 'ir']].values
         y = df_transitive_norm[['oxygen']].values
 
         y = y.reshape((X.shape[0],))
+
+        # Round to nearest decimal place
+        y = [round(i, round_to) for i in y]
+
+        # Stringify label
+        y = np.array([str(i) for i in y])
+
         print_label_counts(y)
 
         X_train, y_train, X_test, y_test = split_training_data(X, y)

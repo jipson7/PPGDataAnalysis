@@ -21,7 +21,9 @@ def load_devices(trial_id):
     with app.app_context():
         trial = Trial.query.get(trial_id)
         trial.get_info()
-        devices = [trial.df_wrist, trial.df_reflective, trial.df_transitive]
+        devices = {'wrist': trial.df_wrist,
+                   'reflective': trial.df_reflective,
+                   'transitive': trial.df_transitive}
         print("Trial load finished.")
         return devices
 
@@ -61,6 +63,9 @@ if __name__ == '__main__':
     default_trial = 13
     devices = load_devices(default_trial)
 
-    X_train, y_train, X_test, y_test = dm.Experiment.oxygen_prediction(wrist=devices[0], transitive=devices[2])
+    X_train, y_train, X_test, y_test = \
+        dm.Experiment.oxygen_classification(wrist=devices['wrist'],
+                                            oxygen_device=devices['reflective'],
+                                            round_to=0)
 
     run_random_forest(X_train, y_train, X_test, y_test)
