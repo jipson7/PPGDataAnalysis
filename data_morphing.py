@@ -73,7 +73,7 @@ class Experiment(object):
         if wrist is None or oxygen_device is None:
             raise ValueError("None value passed to data prep method")
         df_wrist_norm, df_transitive_norm = normalize_timestamps(wrist, oxygen_device)
-        X = df_wrist_norm[['red', 'ir']].values
+        X = df_wrist_norm[['red', 'ir', 'gyro', 'accel']].values
         y = df_transitive_norm[['oxygen']].values
 
         y = y.reshape((X.shape[0],))

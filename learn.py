@@ -60,12 +60,12 @@ def run_random_forest(X_train, y_train, X_test, y_test):
 
 if __name__ == '__main__':
     list_trials()
-    default_trial = 15
+    default_trial = 16
     devices = load_devices(default_trial)
 
     X_train, y_train, X_test, y_test = \
         dm.Experiment.oxygen_classification(wrist=devices['wrist'],
                                             oxygen_device=devices['reflective'],
-                                            round_to=0)
+                                            round_to=1)
 
     run_random_forest(X_train, y_train, X_test, y_test)
