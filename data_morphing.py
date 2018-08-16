@@ -1,9 +1,6 @@
 import datetime
 import pandas as pd
 import numpy as np
-from itertools import islice
-from sklearn.metrics import accuracy_score, confusion_matrix
-import matplotlib.pyplot as plt
 
 
 def get_common_endpoints(df1, df2):
@@ -31,40 +28,21 @@ def normalize_timestamps(df1, df2):
     return new_df1, new_df2
 
 
-def windowize_data(X, y):
-    X_windowed = []
-    labels = []
-    for X_window, y_window in zip(windowized(X), windowized(y)):
-        X_window = np.array(X_window)
-        row = []
-        for column in X_window.T:
-            row.extend(column)
-        X_windowed.append(row)
-        labels.append(y_window[-1])
+def windowize_data(X, y, size=100):
+    def window(iterable):
+        i = iter(iterable)
+        win = []
+        for e in range(0, size):
+            win.append(next(i))
+        yield win
+        for e in i:
+            win = win[1:] + [e]
+            yield win
+
+    # Flatten columns wise
+    X_windowed = [np.array(i).flatten(order='F') for i in window(X)]
+    labels = [i[-1] for i in window(y)]
     return np.array(X_windowed), np.array(labels)
-
-
-def windowized(seq, n=100):
-    it = iter(seq)
-    result = tuple(islice(it, n))
-    if len(result) == n:
-        yield result
-    for elem in it:
-        result = result[1:] + (elem,)
-        yield result
-
-
-def plot_confusion_matrix(y_true, y_pred):
-    labels = sorted(list(set(y_true) | set(y_pred)))
-    cm = confusion_matrix(y_true, y_pred, labels)
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    cax = ax.matshow(cm)
-    fig.colorbar(cax)
-    ax.set_xticklabels([''] + labels)
-    ax.set_yticklabels([''] + labels)
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
 
 
 def print_label_counts(y):
@@ -72,14 +50,6 @@ def print_label_counts(y):
     x = Counter(y)
     for label, count in x.items():
         print("Label: {}, Count: {}".format(label, count))
-
-
-def analyze_results(y_true, y_predicted):
-    accuracy = accuracy_score(y_true, y_predicted)
-    print("Accuracy: {}".format(accuracy))
-
-    plot_confusion_matrix(y_true, y_predicted)
-    plt.show()
 
 
 def split_training_data(X, y, ratio=0.66):
@@ -92,3 +62,25 @@ def split_training_data(X, y, ratio=0.66):
     y_test = y[train_size:]
 
     return X_train, y_train, X_test, y_test
+
+
+class Experiment(object):
+
+    @staticmethod
+    def oxygen_prediction(wrist=None, transitive=None):
+        print("\nPrepping Oxygen Prediction dataset...")
+        if wrist is None or transitive is None:
+            raise ValueError("None value passed to data prep method")
+        df_wrist_norm, df_transitive_norm = normalize_timestamps(wrist, transitive)
+        X = df_wrist_norm[['red', 'ir']].values
+        y = df_transitive_norm[['oxygen']].values
+
+        y = y.reshape((X.shape[0],))
+        print_label_counts(y)
+
+        X_train, y_train, X_test, y_test = split_training_data(X, y)
+
+        X_train, y_train = windowize_data(X_train, y_train)
+        X_test, y_test = windowize_data(X_test, y_test)
+
+        return X_train, y_train, X_test, y_test
