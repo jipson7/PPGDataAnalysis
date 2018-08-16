@@ -1,14 +1,19 @@
 from flask_sqlalchemy import SQLAlchemy
 import datetime
 import pandas as pd
+import math
 
 db = SQLAlchemy()
+
+
+def get_speed(v):
+    return math.sqrt((v['x']**2) + (v['y']**2) + (v['z']**2))
 
 
 def extract_sensor_data(data, motion=False):
     index = []
     columns = ['red', 'ir', 'oxygen', 'hr', 'ratio', 'correlation']
-    motion_columns = ['gyro_x', 'gyro_y', 'gyro_z', 'accel_x', 'accel_y', 'accel_z']
+    motion_columns = ['gyro', 'accel']
     rows = []
     for datum in data:
         index.append(datum.timestamp)
@@ -29,15 +34,11 @@ def extract_sensor_data(data, motion=False):
         else:
             row += [None] * 4
         if motion:
-            gyro = reading['gyro']
-            accel = reading['accel']
+            gyro_speed = get_speed(reading['gyro'])
+            accel_speed = get_speed(reading['accel'])
             row += [
-                gyro['x'],
-                gyro['y'],
-                gyro['z'],
-                accel['x'],
-                accel['y'],
-                accel['z']
+                gyro_speed,
+                accel_speed
             ]
         rows.append(row)
     if motion:
@@ -106,6 +107,18 @@ class Trial(db.Model):
     @property
     def transitive_data(self):
         return self.data.filter_by(device=2).all()
+
+    # Prints information but also has the side effect of loading the lazy devices
+    def get_info(self):
+        print("\ndf_wrist")
+        print("columns: " + str(self.df_wrist.columns.tolist()))
+        print("shape  : " + str(self.df_wrist.shape))
+        print("\ndf_reflective")
+        print("columns: " + str(self.df_reflective.columns.tolist()))
+        print("shape  : " + str(self.df_reflective.shape))
+        print("\ndf_transitive")
+        print("columns: " + str(self.df_transitive.columns.tolist()))
+        print("shape  : " + str(self.df_transitive.shape))
 
 
 class Data(db.Model):
