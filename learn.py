@@ -3,10 +3,14 @@ from models import Trial
 import data_morphing as dm
 import matplotlib.pyplot as plt
 import numpy as np
+import pickle
+import os.path
 
 from sklearn.metrics import accuracy_score, confusion_matrix
 
 np.random.seed(42)
+
+data_cache = './data-cache/'
 
 
 def list_trials():
@@ -18,14 +22,21 @@ def list_trials():
 
 def load_devices(trial_id):
     print("\nLoading trial " + str(trial_id))
-    with app.app_context():
-        trial = Trial.query.get(trial_id)
-        trial.get_info()
-        devices = {'wrist': trial.df_wrist,
-                   'reflective': trial.df_reflective,
-                   'transitive': trial.df_transitive}
-        print("Trial load finished.")
-        return devices
+
+    pickle_path = data_cache + str(trial_id)
+
+    if os.path.isfile(pickle_path):
+        return pickle.load(open(pickle_path, "rb"))
+    else:
+        with app.app_context():
+            trial = Trial.query.get(trial_id)
+            trial.get_info()
+            devices = {'wrist': trial.df_wrist,
+                       'reflective': trial.df_reflective,
+                       'transitive': trial.df_transitive}
+            print("Trial load finished.")
+            pickle.dump(devices, open(pickle_path, "wb"))
+            return devices
 
 
 def plot_confusion_matrix(y_true, y_pred):
@@ -58,6 +69,11 @@ def run_random_forest(X_train, y_train, X_test, y_test):
     analyze_results(y_test, y_predicted)
 
 
+def run_fnn(X_train, y_train, X_test, y_test):
+    print(X_train.shape)
+    print(X_test.shape)
+
+
 if __name__ == '__main__':
     list_trials()
     default_trial = 16
@@ -69,3 +85,4 @@ if __name__ == '__main__':
                                             round_to=1)
 
     run_random_forest(X_train, y_train, X_test, y_test)
+    run_fnn(X_train, y_train, X_test, y_test)
