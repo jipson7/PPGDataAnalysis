@@ -1,6 +1,9 @@
 import datetime
 import pandas as pd
 import numpy as np
+from keras.utils import np_utils
+
+from sklearn.preprocessing import LabelEncoder
 
 
 def get_common_endpoints(df1, df2):
@@ -68,10 +71,20 @@ def split_training_data(X, y, ratio=0.66):
 class Experiment(object):
 
     @staticmethod
-    def oxygen_classification(wrist=None, oxygen_device=None, round_to=1):
+    def one_hot_encode(Y):
+        # encode class values as integers
+        encoder = LabelEncoder()
+        encoder.fit(Y)
+        encoded_Y = encoder.transform(Y)
+        # convert integers to dummy variables (i.e. one hot encoded)
+        return np_utils.to_categorical(encoded_Y)
+
+
+    @staticmethod
+    def oxygen_classification(wrist=None, oxygen_device=None, round_to=1, one_hot=False):
         print("\nPrepping Oxygen Prediction dataset...")
         if wrist is None or oxygen_device is None:
-            raise ValueError("None value passed to data prep method")
+            raise ValueError("None valued device passed to data prep method")
         df_wrist_norm, df_transitive_norm = normalize_timestamps(wrist, oxygen_device)
         X = df_wrist_norm[['red', 'ir', 'gyro', 'accel']].values
         y = df_transitive_norm[['oxygen']].values
@@ -82,9 +95,15 @@ class Experiment(object):
         y = [round(i, round_to) for i in y]
 
         # Stringify label
-        y = np.array([str(i) for i in y])
+        y = [str(i) for i in y]
+
+        # Numpy encode
+        y = np.array(y)
 
         print_label_counts(y)
+
+        if one_hot:
+            y = Experiment.one_hot_encode(y)
 
         X_train, y_train, X_test, y_test = split_training_data(X, y)
 

@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 import os.path
 
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from keras.models import Sequential
 from keras.layers import Dense
 
@@ -72,18 +72,21 @@ def run_random_forest(X_train, y_train, X_test, y_test):
 
 
 def run_fnn(X_train, y_train, X_test, y_test):
+    EPOCHS = 10
+
     input_dimension = X_train.shape[1]
-    num_classes = len(set(y_train) | set(y_test))
+    num_classes = len(y_train[0])
     # create model
     model = Sequential()
-    model.add(Dense(input_dimension, input_dim=input_dimension, activation='relu'))
+    model.add(Dense(100, input_dim=input_dimension, activation='relu'))
     model.add(Dense(num_classes, activation='softmax'))
     # Compile model
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     # Test model
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train, epochs=EPOCHS)
     y_predicted = model.predict(X_test)
-    analyze_results(y_test, y_predicted)
+    print("Accuracy: {}".format(accuracy_score(y_test, y_predicted)))
+    print("F1 Score: {}".format(f1_score(y_test, y_predicted, average='weighted')))
 
 
 if __name__ == '__main__':
@@ -91,10 +94,22 @@ if __name__ == '__main__':
     default_trial = 16
     devices = load_devices(default_trial)
 
+    # X_train, y_train, X_test, y_test = \
+    #     dm.Experiment.oxygen_classification(wrist=devices['wrist'],
+    #                                         oxygen_device=devices['reflective'],
+    #                                         round_to=1,
+    #                                         one_hot=False)
+    #
+    #
+    # run_random_forest(X_train, y_train, X_test, y_test)
+
     X_train, y_train, X_test, y_test = \
         dm.Experiment.oxygen_classification(wrist=devices['wrist'],
                                             oxygen_device=devices['reflective'],
-                                            round_to=1)
+                                            round_to=0,
+                                            one_hot=True)
 
-    # run_random_forest(X_train, y_train, X_test, y_test)
+    print(X_train.shape)
+    print(y_train.shape)
+
     run_fnn(X_train, y_train, X_test, y_test)
