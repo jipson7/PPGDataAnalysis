@@ -79,15 +79,19 @@ class Experiment(object):
         # convert integers to dummy variables (i.e. one hot encoded)
         return np_utils.to_categorical(encoded_Y)
 
-
     @staticmethod
-    def oxygen_classification(wrist=None, oxygen_device=None, round_to=1, one_hot=False):
+    def oxygen_classification(input_device=None, oxygen_device=None, round_to=1, one_hot=False):
         print("\nPrepping Oxygen Prediction dataset...")
-        if wrist is None or oxygen_device is None:
+        if input_device is None or oxygen_device is None:
             raise ValueError("None valued device passed to data prep method")
-        df_wrist_norm, df_transitive_norm = normalize_timestamps(wrist, oxygen_device)
-        X = df_wrist_norm[['red', 'ir', 'gyro', 'accel']].values
-        y = df_transitive_norm[['oxygen']].values
+        df_input_norm, df_oxygen_norm = normalize_timestamps(input_device, oxygen_device)
+
+        input_columns = ['red', 'ir']
+        if {'gyro', 'accel'}.issubset(df_input_norm.columns):
+            input_columns = ['red', 'ir', 'gyro', 'accel']
+
+        X = df_input_norm[input_columns].values
+        y = df_oxygen_norm[['oxygen']].values
 
         y = y.reshape((X.shape[0],))
 

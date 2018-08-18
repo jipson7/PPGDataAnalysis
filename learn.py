@@ -62,7 +62,14 @@ def analyze_results(y_true, y_predicted):
     plt.show()
 
 
-def run_random_forest(X_train, y_train, X_test, y_test):
+def run_random_forest():
+    X_train, y_train, X_test, y_test = \
+        dm.Experiment.oxygen_classification(input_device=devices['wrist'],
+                                            oxygen_device=devices['reflective'],
+                                            round_to=1,
+                                            one_hot=False)
+
+
     print('\nRunning Random Forest Classifier')
     from sklearn.ensemble import RandomForestClassifier
     clf = RandomForestClassifier()
@@ -72,8 +79,8 @@ def run_random_forest(X_train, y_train, X_test, y_test):
 
 
 def run_fnn(X_train, y_train, X_test, y_test):
-    EPOCHS = 10
-
+    EPOCHS = 1
+    BATCH_SIZE = 1
     input_dimension = X_train.shape[1]
     num_classes = len(y_train[0])
     # create model
@@ -83,7 +90,7 @@ def run_fnn(X_train, y_train, X_test, y_test):
     # Compile model
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     # Test model
-    model.fit(X_train, y_train, epochs=EPOCHS)
+    model.fit(X_train, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE)
     y_predicted = model.predict(X_test)
     print("Accuracy: {}".format(accuracy_score(y_test, y_predicted)))
     print("F1 Score: {}".format(f1_score(y_test, y_predicted, average='weighted')))
@@ -91,24 +98,17 @@ def run_fnn(X_train, y_train, X_test, y_test):
 
 if __name__ == '__main__':
     list_trials()
-    default_trial = 16
+    default_trial = 15
     devices = load_devices(default_trial)
 
-    # X_train, y_train, X_test, y_test = \
-    #     dm.Experiment.oxygen_classification(wrist=devices['wrist'],
-    #                                         oxygen_device=devices['reflective'],
-    #                                         round_to=1,
-    #                                         one_hot=False)
-    #
-    #
-    # run_random_forest(X_train, y_train, X_test, y_test)
 
     X_train, y_train, X_test, y_test = \
-        dm.Experiment.oxygen_classification(wrist=devices['wrist'],
+        dm.Experiment.oxygen_classification(input_device=devices['wrist'],
                                             oxygen_device=devices['reflective'],
                                             round_to=0,
                                             one_hot=True)
 
+    # TODO combine multiple datasets here since they're already prepped
     print(X_train.shape)
     print(y_train.shape)
 
