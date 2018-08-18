@@ -1,9 +1,7 @@
 import datetime
 import pandas as pd
 import numpy as np
-from keras.utils import np_utils
-
-from sklearn.preprocessing import LabelEncoder
+from sklearn.preprocessing import normalize
 
 
 def get_common_endpoints(df1, df2):
@@ -71,16 +69,7 @@ def split_training_data(X, y, ratio=0.66):
 class Experiment(object):
 
     @staticmethod
-    def one_hot_encode(Y):
-        # encode class values as integers
-        encoder = LabelEncoder()
-        encoder.fit(Y)
-        encoded_Y = encoder.transform(Y)
-        # convert integers to dummy variables (i.e. one hot encoded)
-        return np_utils.to_categorical(encoded_Y)
-
-    @staticmethod
-    def oxygen_classification(input_device=None, oxygen_device=None, round_to=1, one_hot=False):
+    def oxygen_classification(input_device=None, oxygen_device=None, round_to=1):
         print("\nPrepping Oxygen Prediction dataset...")
         if input_device is None or oxygen_device is None:
             raise ValueError("None valued device passed to data prep method")
@@ -91,6 +80,7 @@ class Experiment(object):
             input_columns = ['red', 'ir', 'gyro', 'accel']
 
         X = df_input_norm[input_columns].values
+        #X = normalize(X, axis=0)
         y = df_oxygen_norm[['oxygen']].values
 
         y = y.reshape((X.shape[0],))
@@ -106,12 +96,13 @@ class Experiment(object):
 
         print_label_counts(y)
 
-        if one_hot:
-            y = Experiment.one_hot_encode(y)
-
         X_train, y_train, X_test, y_test = split_training_data(X, y)
 
         X_train, y_train = windowize_data(X_train, y_train)
+        assert X_train.shape[0] == y_train.shape[0]
         X_test, y_test = windowize_data(X_test, y_test)
+        assert X_test.shape[0] == y_test.shape[0]
 
         return X_train, y_train, X_test, y_test
+
+
