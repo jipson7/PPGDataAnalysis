@@ -7,6 +7,8 @@ import pickle
 import os.path
 
 from sklearn.metrics import accuracy_score, confusion_matrix
+from keras.models import Sequential
+from keras.layers import Dense
 
 np.random.seed(42)
 
@@ -70,8 +72,18 @@ def run_random_forest(X_train, y_train, X_test, y_test):
 
 
 def run_fnn(X_train, y_train, X_test, y_test):
-    print(X_train.shape)
-    print(X_test.shape)
+    input_dimension = X_train.shape[1]
+    num_classes = len(set(y_train) | set(y_test))
+    # create model
+    model = Sequential()
+    model.add(Dense(input_dimension, input_dim=input_dimension, activation='relu'))
+    model.add(Dense(num_classes, activation='softmax'))
+    # Compile model
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    # Test model
+    model.fit(X_train, y_train)
+    y_predicted = model.predict(X_test)
+    analyze_results(y_test, y_predicted)
 
 
 if __name__ == '__main__':
@@ -84,5 +96,5 @@ if __name__ == '__main__':
                                             oxygen_device=devices['reflective'],
                                             round_to=1)
 
-    run_random_forest(X_train, y_train, X_test, y_test)
+    # run_random_forest(X_train, y_train, X_test, y_test)
     run_fnn(X_train, y_train, X_test, y_test)
