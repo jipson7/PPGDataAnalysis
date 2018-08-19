@@ -111,6 +111,12 @@ class FeatureExtractor:
             # StdDev
             feature_row.extend(led_traces.std(axis=0))
 
+            # Max
+            feature_row.extend(led_traces.max(axis=0))
+
+            # Min
+            feature_row.extend(led_traces.min(axis=0))
+
             # Pearson Correlation
             p_corr = np.corrcoef(led_traces, rowvar=False)[0, 1]
             p_correlation = p_corr if not np.isnan(p_corr) else 0

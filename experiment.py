@@ -1,19 +1,43 @@
 import data
 from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
+
+
+def analyze_classifier(X, y, clf, params={}):
+    clf = GridSearchCV(clf,
+                       param_grid=params, scoring=['accuracy', 'f1'],
+                       cv=5, verbose=1, refit='accuracy')
+    clf.fit(X, y)
+    print("\nAccuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
 
 
 def run_random_forest(X, y):
+    print("\nRunning Random Forest")
     parameters = {
         'n_estimators': [x for x in range(20, 50)],
         'criterion': ['gini']
     }
-    scoring = ['accuracy', 'f1']
-    clf = GridSearchCV(RandomForestClassifier(),
-                       parameters, scoring=scoring,
-                       cv=5, verbose=1, refit='accuracy')
-    clf.fit(X, y)
-    print("\nAccuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
+    analyze_classifier(X, y, RandomForestClassifier(), parameters)
+
+
+def run_logistic_regression(X, y):
+    print("\nRunning Logistic Regression")
+    parameters = {
+        'C': [0.0001, 0.001, 0.01, 0.1, 1],
+        'penalty': ('l1', 'l2')
+    }
+    analyze_classifier(X, y, LogisticRegression(), parameters)
+
+
+def run_svc(X, y):
+    print("\nRunning Logistic Regression")
+    parameters = {
+        'C': [0.0001, 0.001, 0.01, 0.1, 1, 10],
+        'kernel': ['rbf', 'sigmoid']
+    }
+    analyze_classifier(X, y, SVC(), parameters)
 
 
 def run():
@@ -30,19 +54,24 @@ def run():
 
     print("Extracting Wrist Features")
     fe = data.FeatureExtractor(window_size=100)
-    wrist_features = fe.extract_wrist_features(wrist)
+    X = fe.extract_wrist_features(wrist)
     oxygen_labels_pred = fe.extract_label(wrist)
 
-    print("Creating Fingertip labels")
+    print("Creating Reliability labels")
+    # TODO Use threshold against both reflective and transitive devices to ensure reliability across devices
+    # TODO This is perhaps a better ground truth????
     oxygen_labels_true = fe.extract_label(fingertip)
-    assert wrist_features.shape[0] == oxygen_labels_true.shape[0]
+    assert X.shape[0] == oxygen_labels_true.shape[0]
     y = fe.create_reliability_label(oxygen_labels_true, oxygen_labels_pred)
 
-    print("Labels created. Label Counts are: ")
+    print("Label Counts are: ")
     data.print_label_counts(y)
 
-    print("\nRunning Random Forest")
-    run_random_forest(wrist_features, y)
+    run_random_forest(X, y)
+
+    run_logistic_regression(X, y)
+
+    run_svc(X, y)
 
 
 if __name__ == '__main__':
