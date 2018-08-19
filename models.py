@@ -46,6 +46,10 @@ def extract_sensor_data(data, motion=False):
     return pd.DataFrame(rows, index=index, columns=columns)
 
 
+def remove_duplicate_timestamps(df):
+    return df[~df.index.duplicated(keep='first')]
+
+
 class Trial(db.Model):
     id = db.Column(db.INTEGER, primary_key=True)
     created = db.Column(db.TIMESTAMP, default=datetime.datetime.utcnow)
@@ -74,11 +78,13 @@ class Trial(db.Model):
 
     @property
     def df_wrist(self):
-        return extract_sensor_data(self.wrist_data, motion=True)
+        df = extract_sensor_data(self.wrist_data, motion=True)
+        return remove_duplicate_timestamps(df)
 
     @property
     def df_reflective(self):
-        return extract_sensor_data(self.reflective_data, motion=False)
+        df = extract_sensor_data(self.reflective_data, motion=False)
+        return remove_duplicate_timestamps(df)
 
     @property
     def df_transitive(self):
@@ -94,7 +100,8 @@ class Trial(db.Model):
                 reading['hr'] if reading['hr_valid'] else None
             ]
             rows.append(row)
-        return pd.DataFrame(rows, index=index, columns=columns)
+        df = pd.DataFrame(rows, index=index, columns=columns)
+        return remove_duplicate_timestamps(df)
 
     @property
     def wrist_data(self):

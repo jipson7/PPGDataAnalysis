@@ -18,7 +18,7 @@ def run_random_forest(X, y):
 
 def run():
     data.list_trials()
-    trial_id = 15
+    trial_id = 16
     devices = data.load_devices(trial_id)
 
     wrist_device = devices['wrist']
