@@ -3,12 +3,13 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
+from keras.wrappers.scikit_learn import KerasClassifier
 
 
 def analyze_classifier(X, y, clf, params={}):
     clf = GridSearchCV(clf,
                        param_grid=params, scoring=['accuracy', 'f1'],
-                       cv=5, verbose=1, refit='accuracy')
+                       cv=5, verbose=2, refit='accuracy')
     clf.fit(X, y)
     print("\nAccuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
 
@@ -40,6 +41,23 @@ def run_svc(X, y):
     analyze_classifier(X, y, SVC(), parameters)
 
 
+def run_nn(X, y):
+    print("\nRunning NN")
+
+    from neural_network import get_model_generator
+    parameters = {
+        'hidden_layers': [1, 2, 3],
+        'hidden_layer_size': [5, 10, 15],
+        'optimizer': ['rmsprop', 'adam'],
+        'init': ['glorot_uniform', 'normal', 'uniform'],
+        'epochs': [1, 10],
+        'batch_size': [10, 50]
+    } # Maybe add loss?
+    model_gen = get_model_generator(X.shape[1])
+    clf = KerasClassifier(build_fn=model_gen, verbose=0)
+    analyze_classifier(X, y, clf, parameters)
+
+
 def run():
     data.list_trials()
     trial_id = 16
@@ -67,11 +85,13 @@ def run():
     print("Label Counts are: ")
     data.print_label_counts(y)
 
-    run_random_forest(X, y)
+    # run_random_forest(X, y)
+    #
+    # run_logistic_regression(X, y)
+    #
+    # run_svc(X, y)
 
-    run_logistic_regression(X, y)
-
-    run_svc(X, y)
+    run_nn(X, y)
 
 
 if __name__ == '__main__':
