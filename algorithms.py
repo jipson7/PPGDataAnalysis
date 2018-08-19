@@ -1,7 +1,6 @@
 from server import app, db, Trial
 from subprocess import run, PIPE
 import json
-from data_morphing import window
 
 
 def apply_algorithms_to_trial(trial_id):
@@ -12,6 +11,15 @@ def apply_algorithms_to_trial(trial_id):
 
 
 def apply_algo_to_data_list(data_list):
+    def window(iterable, size=100):
+        i = iter(iterable)
+        win = []
+        for e in range(0, size):
+            win.append(next(i))
+        yield win
+        for e in i:
+            win = win[1:] + [e]
+            yield win
     for w in window(data_list):
         last_data = w[-1]
         red_window = [str(x.reading.get('red')) for x in w]

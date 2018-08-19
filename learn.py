@@ -14,34 +14,6 @@ from sklearn.preprocessing import LabelEncoder
 
 np.random.seed(42)
 
-data_cache = './data-cache/'
-
-
-def list_trials():
-    with app.app_context():
-        trials = Trial.query.all()
-        for trial in trials:
-            print(trial)
-
-
-def load_devices(trial_id):
-    print("\nLoading trial " + str(trial_id))
-
-    pickle_path = data_cache + str(trial_id)
-
-    if os.path.isfile(pickle_path):
-        return pickle.load(open(pickle_path, "rb"))
-    else:
-        with app.app_context():
-            trial = Trial.query.get(trial_id)
-            trial.get_info()
-            devices = {'wrist': trial.df_wrist,
-                       'reflective': trial.df_reflective,
-                       'transitive': trial.df_transitive}
-            print("Trial load finished.")
-            pickle.dump(devices, open(pickle_path, "wb"))
-            return devices
-
 
 def plot_confusion_matrix(y_true, y_pred):
     labels = sorted(list(set(y_true) | set(y_pred)))
