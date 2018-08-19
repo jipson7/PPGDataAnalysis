@@ -46,8 +46,8 @@ def run_nn(X, y):
 
     from neural_network import get_model_generator
     parameters = {
-        'hidden_layers': [1, 2, 3],
-        'hidden_layer_size': [5, 10, 15],
+        'hidden_layers': [1, 2],
+        'hidden_layer_size': [8, 12],
         'optimizer': ['rmsprop', 'adam'],
         'init': ['glorot_uniform', 'normal', 'uniform'],
         'epochs': [1, 10],
@@ -96,34 +96,3 @@ def run():
 
 if __name__ == '__main__':
     run()
-
-"""
-def run_fnn(X_train, y_train, X_test, y_test):
-    y = np.concatenate((y_train, y_test))
-    encoder = LabelEncoder()
-    encoder.fit(y)
-
-    y_train_hot = np_utils.to_categorical(encoder.transform(y_train))
-
-    y_test_hot = np_utils.to_categorical(encoder.transform(y_test))
-
-    EPOCHS = 1
-    BATCH_SIZE = 1
-    input_dimension = X_train.shape[1]
-    num_classes = len(y_train_hot[0])
-    # create model
-    model = Sequential()
-    model.add(Dense(100, input_dim=input_dimension, activation='relu'))
-    model.add(Dense(num_classes, activation='softmax'))
-    # Compile model
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
-    # Test model
-    model.fit(X_train, y_train_hot, epochs=EPOCHS, batch_size=BATCH_SIZE)
-    results = model.evaluate(X_test, y_test_hot)
-    print(model.metrics_names)
-    print(results)
-    # print(y_predicted_hot)
-    # print("Accuracy: {}".format(accuracy_score(y_test_hot, y_predicted_hot)))
-    # print("F1 Score: {}".format(f1_score(y_test_hot, y_predicted_hot, average='weighted')))
-
-"""
