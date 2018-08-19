@@ -5,6 +5,7 @@ from models import Trial
 import pickle
 import os
 import numpy as np
+from scipy.stats.stats import pearsonr
 
 DATA_CACHE = './data-cache/'
 
@@ -98,20 +99,23 @@ class FeatureExtractor:
             led_traces = raw_sample[:, [0, 1]]
             motion_traces = raw_sample[:, [2, 3]]
 
-            # Extract max for motion
+            """Motion Features"""
+
+            # Max
             feature_row.extend(motion_traces.max(axis=0))
 
-            # Extract Mean for LEDs
+            """LED Features"""
+
+            # Mean
             feature_row.extend(led_traces.mean(axis=0))
 
-            # and StdDev
+            # StdDev
             feature_row.extend(led_traces.std(axis=0))
 
-            """
-            TODO Other features including,
-            correlation
-            median?
-            """
+            # Pearson Correlation
+            p_corr = np.corrcoef(led_traces, rowvar=False)[0, 1]
+            p_correlation = p_corr if not np.isnan(p_corr) else 0
+            feature_row.append(p_correlation)
 
             X.append(feature_row)
         return np.array(X)
