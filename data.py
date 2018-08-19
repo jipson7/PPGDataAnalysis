@@ -62,15 +62,22 @@ def normalize_timestamps(df1, df2):
     return new_df1, new_df2
 
 
+def print_label_counts(y):
+    from collections import Counter
+    x = Counter(y)
+    for label, count in x.items():
+        print("Label: {}, Count: {}".format(label, count))
+
+
 class FeatureExtractor:
 
     def __init__(self, window_size=100):
-        self.window_size = window_size
+        self._window_size = window_size
 
     def window(self, iterable):
         i = iter(iterable)
         win = []
-        for e in range(0, self.window_size):
+        for e in range(0, self._window_size):
             win.append(next(i))
         yield np.array(win)
         for e in i:
@@ -87,7 +94,40 @@ class FeatureExtractor:
         X_raw = wrist_device[input_columns].values
 
         for raw_sample in self.window(X_raw):
+            feature_row = []
+            led_traces = raw_sample[:, [0, 1]]
+            motion_traces = raw_sample[:, [2, 3]]
 
             # Extract max for motion
-            print(raw_sample.shape)
-            exit(0)
+            feature_row.extend(motion_traces.max(axis=0))
+
+            # Extract Mean for LEDs
+            feature_row.extend(led_traces.mean(axis=0))
+
+            # and StdDev
+            feature_row.extend(led_traces.std(axis=0))
+
+            """
+            TODO Other features including,
+            correlation
+            median?
+            """
+
+            X.append(feature_row)
+        return np.array(X)
+
+    def extract_label(self, device, label='oxygen'):
+        labels = device[[label]].values
+        y = []
+        for w in self.window(labels):
+            y.extend(w[-1])
+        return np.array(y)
+
+    def create_reliability_label(self, real, predicted, threshold=1.0):
+        y = np.subtract(real, predicted)
+        y = np.abs(y)
+        less_than_threshold = np.vectorize(lambda x: x <= threshold)
+        y = less_than_threshold(y)
+        return y
+
+
