@@ -5,7 +5,6 @@ from models import Trial
 import pickle
 import os
 import numpy as np
-from scipy.stats.stats import pearsonr
 
 DATA_CACHE = './data-cache/'
 
