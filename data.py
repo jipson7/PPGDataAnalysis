@@ -21,6 +21,8 @@ def list_trials():
 def load_devices(trial_id):
     print("\nLoading trial " + str(trial_id))
 
+    # TODO Normalize all 3 devices here
+
     pickle_path = DATA_CACHE + str(trial_id)
 
     if os.path.isfile(pickle_path):
