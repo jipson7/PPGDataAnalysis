@@ -17,7 +17,7 @@ def analyze_classifier(X, y, clf, params={}):
 def run_random_forest(X, y):
     print("\nRunning Random Forest")
     parameters = {
-        'n_estimators': [x for x in range(20, 50)],
+        'n_estimators': [x for x in range(20, 100, 10)],
         'criterion': ['gini']
     }
     analyze_classifier(X, y, RandomForestClassifier(), parameters)
