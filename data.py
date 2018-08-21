@@ -21,8 +21,6 @@ def list_trials():
 def load_devices(trial_id):
     print("\nLoading trial " + str(trial_id))
 
-    # TODO Normalize all 3 devices here
-
     pickle_path = DATA_CACHE + str(trial_id)
 
     if os.path.isfile(pickle_path):
@@ -31,37 +29,40 @@ def load_devices(trial_id):
         with app.app_context():
             trial = Trial.query.get(trial_id)
             trial.get_info()
-            devices = {'wrist': trial.df_wrist,
-                       'reflective': trial.df_reflective,
-                       'transitive': trial.df_transitive}
+            device_list = \
+                normalize_timestamps([trial.df_wrist,
+                                      trial.df_reflective,
+                                      trial.df_transitive])
             print("Trial load finished.")
-            pickle.dump(devices, open(pickle_path, "wb"))
-            return devices
+            pickle.dump(device_list, open(pickle_path, "wb"))
+            return device_list
 
 
-def normalize_timestamps(df1, df2):
+def normalize_timestamps(dataframes):
+    """Returns the start and end of overlapping window
+    between all N dataframes"""
 
-    def get_common_endpoints(df1, df2):
-        df_start = df1.index[0] if (df1.index[0] > df2.index[0]) else df2.index[0]
-        df_end = df1.index[-1] if (df1.index[-1] < df2.index[-1]) else df2.index[-1]
-        return df_start, df_end
+    print("\nNormalizing Timestamps between {} devices".format(len(dataframes)))
+
+    def get_common_endpoints(dfs):
+        return max([x.index[1] for x in dfs]),\
+               min([x.index[-1] for x in dfs])
 
     sample_range = datetime.timedelta(milliseconds=40)
     indices = []
-    new_data1 = []
-    new_data2 = []
-    df_start, df_end = get_common_endpoints(df1, df2)
+    new_data = [[] for _ in range(len(dataframes))]
+    df_start, df_end = get_common_endpoints(dataframes)
     sample_date = df_start
     while sample_date < df_end:
-        data1 = df1.iloc[df1.index.get_loc(sample_date, method='nearest')].values
-        data2 = df2.iloc[df2.index.get_loc(sample_date, method='nearest')].values
+        for i, df in enumerate(dataframes):
+            data = df.iloc[df.index.get_loc(sample_date, method='nearest')].values
+            new_data[i].append(data)
         indices.append(sample_date)
-        new_data1.append(data1)
-        new_data2.append(data2)
         sample_date += sample_range
-    new_df1 = pd.DataFrame(data=new_data1, index=indices, columns=df1.columns.values)
-    new_df2 = pd.DataFrame(data=new_data2, index=indices, columns=df2.columns.values)
-    return new_df1, new_df2
+    result = []
+    for df, data in zip(dataframes, new_data):
+        result.append(pd.DataFrame(data=data, index=indices, columns=df.columns.values))
+    return result
 
 
 def print_label_counts(y):
@@ -72,7 +73,6 @@ def print_label_counts(y):
 
 
 class FeatureExtractor:
-
     def __init__(self, window_size=100):
         self._window_size = window_size
 
@@ -127,18 +127,29 @@ class FeatureExtractor:
             X.append(feature_row)
         return np.array(X)
 
-    def extract_label(self, device, label='oxygen'):
+    def _extract_label(self, device, label='oxygen'):
         labels = device[[label]].values
         y = []
         for w in self.window(labels):
             y.extend(w[-1])
         return np.array(y)
 
-    def create_reliability_label(self, real, predicted, threshold=1.0):
-        y = np.subtract(real, predicted)
-        y = np.abs(y)
-        less_than_threshold = np.vectorize(lambda x: x <= threshold)
-        y = less_than_threshold(y)
-        return y
+    def create_reliability_label(self, devices, threshold=9.0):
+        from itertools import combinations
+        y_s = []
+        for device in devices:
+            y_s.append(self._extract_label(device))
+        errors = []
+        for y1, y2 in combinations(y_s, 2):
+            diff = np.abs(np.subtract(y1, y2))
+            errors.append(diff)
+
+        y = []
+        for row_error in np.array(errors).T:
+            if np.isnan(row_error).any() or row_error.sum() > threshold:
+                y.append(False)
+            else:
+                y.append(True)
+        return np.array(y)
 
 

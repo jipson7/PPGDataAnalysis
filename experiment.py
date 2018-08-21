@@ -43,7 +43,7 @@ def run_svc(X, y):
 
 def run_nn(X, y):
     print("\nRunning NN")
-
+    # TODO Retune NN. Maybe run it on a beefier server?
     from neural_network import get_model_generator
     # parameters = {
     #     'hidden_layers': [1, 2],
@@ -67,26 +67,12 @@ def run():
     trial_id = 16
     devices = data.load_devices(trial_id)
 
-    wrist_device = devices['wrist']
-
-    label_device = devices['reflective']
-
-    print("Aligning timestamps")
-    wrist, fingertip = data.normalize_timestamps(wrist_device, label_device)
-
     print("Extracting Wrist Features")
     fe = data.FeatureExtractor(window_size=100)
-    X = fe.extract_wrist_features(wrist)
-    oxygen_labels_pred = fe.extract_label(wrist)
+    X = fe.extract_wrist_features(devices[0])
 
     print("Creating Reliability labels")
-    # TODO Use threshold against both reflective and transitive devices to ensure reliability across devices
-    # TODO This is perhaps a better ground truth????
-    oxygen_labels_true = fe.extract_label(fingertip)
-    assert X.shape[0] == oxygen_labels_true.shape[0]
-    y = fe.create_reliability_label(oxygen_labels_true, oxygen_labels_pred)
-
-    print("Label Counts are: ")
+    y = fe.create_reliability_label(devices)
     data.print_label_counts(y)
 
     run_random_forest(X, y)
