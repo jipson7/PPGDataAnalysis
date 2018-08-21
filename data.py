@@ -134,14 +134,14 @@ class FeatureExtractor:
             y.extend(w[-1])
         return np.array(y)
 
-    def create_reliability_label(self, devices, threshold=9.0):
+    def create_reliability_label(self, devices, threshold=7.0):
         from itertools import combinations
-        y_s = []
+        labels = []
         for device in devices:
-            y_s.append(self._extract_label(device))
+            labels.append(self._extract_label(device))
         errors = []
-        for y1, y2 in combinations(y_s, 2):
-            diff = np.abs(np.subtract(y1, y2))
+        for label1, label2 in combinations(labels, 2):
+            diff = np.abs(np.subtract(label1, label2))
             errors.append(diff)
 
         y = []
