@@ -33,7 +33,7 @@ def run_logistic_regression(X, y):
 
 
 def run_svc(X, y):
-    print("\nRunning Logistic Regression")
+    print("\nRunning Support Vector Classification")
     parameters = {
         'C': [0.0001, 0.001, 0.01, 0.1, 1, 10],
         'kernel': ['rbf', 'sigmoid']
@@ -45,18 +45,18 @@ def run_nn(X, y):
     print("\nRunning NN")
     # TODO Retune NN. Maybe run it on a beefier server?
     from neural_network import get_model_generator
-    # parameters = {
-    #     'hidden_layers': [1, 2],
-    #     'hidden_layer_size': [8, 12],
-    #     'optimizer': ['rmsprop', 'adam'],
-    #     'init': ['glorot_uniform', 'normal', 'uniform'],
-    #     'epochs': [1],
-    #     'batch_size': [10, 50]
-    # } # Maybe add loss?
     parameters = {
-        'epochs': [1, 2 ],
-        'batch_size': [100, 250, 500, 1000]
-    }
+        'hidden_layers': [1, 2, 3],
+        'hidden_layer_size': [4, 8],
+        'optimizer': ['rmsprop', 'adam'],
+        'init': ['glorot_uniform', 'normal', 'uniform'],
+        'epochs': [1],
+        'batch_size': [32]
+    } # Maybe add loss?
+    # parameters = {
+    #     'epochs': [1, 2 ],
+    #     'batch_size': [100, 250, 500, 1000]
+    # }
     model_gen = get_model_generator(X.shape[1])
     clf = KerasClassifier(build_fn=model_gen, verbose=0)
     analyze_classifier(X, y, clf, parameters)
@@ -64,7 +64,7 @@ def run_nn(X, y):
 
 def run():
     data.list_trials()
-    trial_id = 16
+    trial_id = 15
     devices = data.load_devices(trial_id)
 
     print("Extracting Wrist Features")

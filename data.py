@@ -134,7 +134,11 @@ class FeatureExtractor:
             y.extend(w[-1])
         return np.array(y)
 
-    def create_reliability_label(self, devices, threshold=7.0):
+    """
+    Threshold is defined as the largest distance (max) between any 2 non-null
+    O2 Values measured across devices.
+    """
+    def create_reliability_label(self, devices, threshold=3.0):
         from itertools import combinations
         labels = []
         for device in devices:
@@ -146,7 +150,7 @@ class FeatureExtractor:
 
         y = []
         for row_error in np.array(errors).T:
-            if np.isnan(row_error).any() or row_error.sum() > threshold:
+            if np.isnan(row_error).any() or row_error.max() > threshold:
                 y.append(False)
             else:
                 y.append(True)
