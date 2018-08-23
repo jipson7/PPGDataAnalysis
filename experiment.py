@@ -2,7 +2,7 @@ import data
 import pickle
 import warnings
 from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from keras.wrappers.scikit_learn import KerasClassifier
