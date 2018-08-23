@@ -32,7 +32,7 @@ def extract_sensor_data(data, motion=False):
                 enhanced['correlation']
             ]
         else:
-            row += [None] * 4
+            raise RuntimeError("Remeber to apply algorithms binary to Trial before analyzing.")
         if motion:
             gyro_speed = get_speed(reading['gyro'])
             accel_speed = get_speed(reading['accel'])
