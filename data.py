@@ -145,7 +145,10 @@ class FeatureExtractor:
             labels.append(self._extract_label(device))
         errors = []
         for label1, label2 in combinations(labels, 2):
-            diff = np.abs(np.subtract(label1, label2))
+            try:
+                diff = np.abs(np.subtract(label1, label2))
+            except TypeError:
+                raise RuntimeError("Unable to find algorithms. Remember to apply binary to trial")
             errors.append(diff)
 
         y = []
