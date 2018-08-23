@@ -6,7 +6,7 @@ import pickle
 import os
 import numpy as np
 
-DATA_CACHE = './data-cache/'
+TRIAL_CACHE = './data-cache/trials/'
 
 np.random.seed(42)
 
@@ -21,7 +21,7 @@ def list_trials():
 def load_devices(trial_id):
     print("\nLoading trial " + str(trial_id))
 
-    pickle_path = DATA_CACHE + str(trial_id)
+    pickle_path = TRIAL_CACHE + str(trial_id)
 
     if os.path.isfile(pickle_path):
         return pickle.load(open(pickle_path, "rb"))
