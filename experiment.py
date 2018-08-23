@@ -81,7 +81,7 @@ def run_nn(X, y):
 
 def run():
     data.list_trials()
-    trial_id = 15
+    trial_id = 17
     devices = data.load_devices(trial_id)
 
     print("Extracting Wrist Features")

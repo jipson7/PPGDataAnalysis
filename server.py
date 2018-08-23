@@ -9,9 +9,9 @@ app = Flask(__name__)
 app.config.from_object('config')
 db.init_app(app)
 
-# Set log level to error
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
+# # Set log level to error
+# log = logging.getLogger('werkzeug')
+# log.setLevel(logging.ERROR)
 
 
 @app.route('/')
