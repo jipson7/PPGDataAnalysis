@@ -1,10 +1,14 @@
 import data
 import pickle
+import warnings
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from keras.wrappers.scikit_learn import KerasClassifier
+
+# Used to suppress Fscore ill defined
+warnings.filterwarnings('ignore')
 
 
 MODEL_CACHE = './data-cache/models/'
@@ -20,7 +24,7 @@ def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     clf_name = type(clf_og).__name__
     print(clf_name + " results:")
     for param, accuracy, f1 in zip(results['params'], results['mean_test_accuracy'], results['mean_test_f1_weighted']):
-        print("Accuracy: {}, F1-Weighed: {}, Params: {}".format(accuracy, f1, param))
+        print("Accuracy: {}, F1-Weighted: {}, Params: {}".format(accuracy, f1, param))
     print("\nBest Accuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
     estimator = clf.best_estimator_
     pickle_path = MODEL_CACHE + clf_name
@@ -47,10 +51,12 @@ def run_logistic_regression(X, y):
 
 def run_svc(X, y):
     print("\nRunning Support Vector Classification")
-    parameters = {
+    parameters = [{
         'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100],
-        'kernel': ['rbf', 'sigmoid', 'poly']
-    }
+        'kernel': ['rbf', 'sigmoid']
+    }, {
+        'kernel': ['poly']
+    }]
     analyze_classifier(X, y, SVC(), params=parameters)
 
 
@@ -59,8 +65,8 @@ def run_nn(X, y):
     # TODO Retune NN. Maybe run it on a beefier server?
     from neural_network import get_model_generator
     parameters = {
-        'hidden_layers': [1, 2, 3],
-        'hidden_layer_size': [4, 8],
+        'hidden_layers': [1, 2, 3, 4],
+        'hidden_layer_size': [4, 8, 12],
         'optimizer': ['rmsprop', 'adam'],
         'init': ['glorot_uniform', 'normal', 'uniform'],
         'epochs': [1],
