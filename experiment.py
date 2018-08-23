@@ -24,7 +24,7 @@ def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     clf_name = type(clf_og).__name__
     print(clf_name + " results:")
     for param, accuracy, f1 in zip(results['params'], results['mean_test_accuracy'], results['mean_test_f1_weighted']):
-        print("Accuracy: {}, F1-Weighted: {}, Params: {}".format(accuracy, f1, param))
+        print("Accuracy: {:.3f}, F1-Weighted: {:.3f}, Params: {}".format(accuracy, f1, param))
     print("\nBest Accuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
     estimator = clf.best_estimator_
     pickle_path = MODEL_CACHE + clf_name
