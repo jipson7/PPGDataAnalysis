@@ -74,7 +74,8 @@ class Trial(db.Model):
         return str(self.id) + " - " + \
                self.user['name'] + " - " + \
                self.info + " - " + \
-               str(self.created)
+               str(self.created) + " - " + \
+               str(self.data.count()) + " samples"
 
     @property
     def df_wrist(self):
