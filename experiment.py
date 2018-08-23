@@ -43,7 +43,7 @@ def run_random_forest(X, y):
 def run_logistic_regression(X, y):
     print("\nRunning Logistic Regression")
     parameters = {
-        'C': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+        'C': [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
         'penalty': ('l1', 'l2')
     }
     analyze_classifier(X, y, LogisticRegression(), params=parameters)
