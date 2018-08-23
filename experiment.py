@@ -51,12 +51,10 @@ def run_logistic_regression(X, y):
 
 def run_svc(X, y):
     print("\nRunning Support Vector Classification")
-    parameters = [{
+    parameters = {
         'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100],
         'kernel': ['rbf', 'sigmoid']
-    }, {
-        'kernel': ['poly']
-    }]
+    }
     analyze_classifier(X, y, SVC(), params=parameters)
 
 
