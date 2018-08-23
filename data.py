@@ -73,8 +73,10 @@ def print_label_counts(y):
 
 
 class FeatureExtractor:
+
     def __init__(self, window_size=100):
         self._window_size = window_size
+        self.feature_names = ['gyro_max', 'accel_max', 'red_mean', 'ir_mean', 'red_std', 'ir_std', 'red_range', 'ir_range', 'correlation']
 
     def window(self, iterable):
         i = iter(iterable)
@@ -101,23 +103,21 @@ class FeatureExtractor:
             motion_traces = raw_sample[:, [2, 3]]
 
             """Motion Features"""
-
             # Max
             feature_row.extend(motion_traces.max(axis=0))
 
             """LED Features"""
-
             # Mean
             feature_row.extend(led_traces.mean(axis=0))
 
             # StdDev
             feature_row.extend(led_traces.std(axis=0))
 
-            # Max
-            feature_row.extend(led_traces.max(axis=0))
-
-            # Min
-            feature_row.extend(led_traces.min(axis=0))
+            # Range
+            led_max = led_traces.max(axis=0)
+            led_min = led_traces.min(axis=0)
+            led_range = np.subtract(led_max, led_min)
+            feature_row.extend(led_range)
 
             # Pearson Correlation
             p_corr = np.corrcoef(led_traces, rowvar=False)[0, 1]
@@ -125,7 +125,9 @@ class FeatureExtractor:
             feature_row.append(p_correlation)
 
             X.append(feature_row)
-        return np.array(X)
+        X = np.array(X)
+        assert len(self.feature_names) == X.shape[1]
+        return X
 
     def _extract_label(self, device, label='oxygen'):
         labels = device[[label]].values
