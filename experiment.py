@@ -1,12 +1,12 @@
 import data
 import pickle
 import warnings
-import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.metrics import classification_report, accuracy_score
 
 # Used to suppress Fscore ill defined
 warnings.filterwarnings('ignore')
@@ -44,8 +44,8 @@ def run_random_forest(X, y):
 def run_logistic_regression(X, y):
     print("\nRunning Logistic Regression")
     parameters = {
-        'C': [x for x in np.logspace(start=-10, stop=1, num=11, base=10)],
-        'penalty': ('l1', 'l2')
+        'C': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1, 10],
+        'penalty': ['l2']
     }
     analyze_classifier(X, y, LogisticRegression(), params=parameters)
 
@@ -80,18 +80,8 @@ def run_nn(X, y):
     analyze_classifier(X, y, clf, params=parameters, n_jobs=1)
 
 
-def run():
-    data.list_trials()
-    trial_id = 17
-    devices = data.load_devices(trial_id)
-
-    print("Extracting Wrist Features")
-    fe = data.FeatureExtractor(window_size=100)
-    X = fe.extract_wrist_features(devices[0])
-
-    print("Creating Reliability labels")
-    y = fe.create_reliability_label(devices)
-    data.print_label_counts(y)
+def create_optimized_models(trial_id):
+    X, y = load_data(trial_id)
 
     run_random_forest(X, y)
 
@@ -102,5 +92,36 @@ def run():
     run_nn(X, y)
 
 
+def apply_model(model_name, trial_ids):
+    for trial_id in trial_ids:
+        X, y_true = load_data(trial_id)
+        model_path = MODEL_CACHE + model_name
+        clf = pickle.load(open(model_path, "rb"))
+        y_pred = clf.predict(X)
+        print("\nReport for {} run against trial {} :".format(model_name, trial_id))
+        print(classification_report(y_true, y_pred))
+        print("Label set: " + str(set(y_pred)))
+        print(accuracy_score(y_true, y_pred))
+
+
+def load_data(trial_id):
+    devices = data.load_devices(trial_id)
+
+    print("Extracting Wrist Features")
+    fe = data.FeatureExtractor(window_size=100)
+    X = fe.extract_wrist_features(devices[0])
+
+    print("Creating Reliability labels")
+    y = fe.create_reliability_label(devices)
+    data.print_label_counts(y)
+    return X, y
+
+
 if __name__ == '__main__':
-    run()
+    trial_ids = data.list_trials()
+
+    training_trial = 17
+    create_optimized_models(training_trial)
+
+    apply_model("RandomForestClassifier", trial_ids)
+
