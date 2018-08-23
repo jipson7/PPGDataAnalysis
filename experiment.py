@@ -1,6 +1,7 @@
 import data
 import pickle
 import warnings
+import numpy as np
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
@@ -43,7 +44,7 @@ def run_random_forest(X, y):
 def run_logistic_regression(X, y):
     print("\nRunning Logistic Regression")
     parameters = {
-        'C': [0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
+        'C': [x for x in np.logspace(start=-10, stop=1, num=11, base=10)],
         'penalty': ('l1', 'l2')
     }
     analyze_classifier(X, y, LogisticRegression(), params=parameters)
