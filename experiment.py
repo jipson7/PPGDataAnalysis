@@ -6,7 +6,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from keras.wrappers.scikit_learn import KerasClassifier
+from keras.models import save_model, load_model
 import matplotlib.pyplot as plt
+import numpy as np
 
 # Used to suppress Fscore ill defined
 warnings.filterwarnings('ignore')
@@ -32,7 +34,10 @@ def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     print("\nBest {} {}, Params: {}".format(scoring, clf.best_score_, clf.best_params_))
     estimator = clf.best_estimator_
     pickle_path = MODEL_CACHE + clf_name
-    pickle.dump(estimator, open(pickle_path, "wb"))
+    if clf_name == "KerasClassifier":
+        save_model(estimator.model, pickle_path)
+    else:
+        pickle.dump(estimator, open(pickle_path, "wb"))
 
 
 def run_random_forest(X, y):
@@ -75,18 +80,22 @@ def run_nn(X, y):
     print("\nRunning NN")
     # TODO Retune NN. Maybe run it on a beefier server?
     from neural_network import get_model_generator
+    # parameters = {
+    #     'hidden_layers': [1, 2, 3, 4],
+    #     'hidden_layer_size': [4, 8, 12],
+    #     'optimizer': ['rmsprop', 'adam'],
+    #     'init': ['glorot_uniform', 'normal', 'uniform'],
+    #     'epochs': [1],
+    #     'batch_size': [32]
+    # }
     parameters = {
-        'hidden_layers': [1, 2, 3, 4],
+        'hidden_layers': [3],
         'hidden_layer_size': [4, 8, 12],
-        'optimizer': ['rmsprop', 'adam'],
-        'init': ['glorot_uniform', 'normal', 'uniform'],
+        'optimizer': ['rmsprop'],
+        'init': ['normal'],
         'epochs': [1],
         'batch_size': [32]
-    } # Maybe add loss?
-    # parameters = {
-    #     'epochs': [1, 2 ],
-    #     'batch_size': [100, 250, 500, 1000]
-    # }
+    }
     model_gen = get_model_generator(X.shape[1])
     clf = KerasClassifier(build_fn=model_gen, verbose=0)
     analyze_classifier(X, y, clf, params=parameters, n_jobs=1)
@@ -94,15 +103,10 @@ def run_nn(X, y):
 
 def create_optimized_models(trial_id):
     X, y = load_data(trial_id)
-
     run_random_forest(X, y)
-
     run_logistic_regression(X, y)
-
     run_svc(X, y)
-
     run_gradient_boost(X, y)
-
     run_nn(X, y)
 
 
@@ -111,13 +115,18 @@ def apply_model(model_name, trial_ids):
     for trial_id in trial_ids:
         X, y_true = load_data(trial_id)
         model_path = MODEL_CACHE + model_name
-        clf = pickle.load(open(model_path, "rb"))
-        y_pred = clf.predict(X)
+        if model_name == "KerasClassifier":
+            clf = load_model(model_path)
+            y_pred = clf.predict_classes(X).tolist()
+        else:
+            clf = pickle.load(open(model_path, "rb"))
+            y_pred = clf.predict(X)
+        labels = sorted(np.unique(y_pred))
         print("\nReport for {} run against trial {} :".format(model_name, trial_id))
-        print("Label set: " + str(set(y_pred)))
+        print("Label set: " + str(labels))
         print("Precision-Weighted: " + str(precision_score(y_true, y_pred, average="weighted")))
         cm = confusion_matrix(y_true, y_pred)
-        data.plot_confusion_matrix(cm, normalize=True, classes=[False, True], title='Normalized confusion matrix')
+        data.plot_confusion_matrix(cm, normalize=True, classes=labels, title='Normalized confusion matrix')
         plt.show()
 
 
@@ -138,7 +147,7 @@ if __name__ == '__main__':
     trial_ids = data.list_trials()
 
     training_trial = 17
-    # create_optimized_models(training_trial)
+    create_optimized_models(training_trial)
 
     trial_ids.remove(training_trial)
     apply_model("RandomForestClassifier", trial_ids)
