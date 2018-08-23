@@ -76,7 +76,7 @@ class FeatureExtractor:
 
     def __init__(self, window_size=100):
         self._window_size = window_size
-        self.feature_names = ['gyro_max', 'accel_max', 'red_mean', 'ir_mean', 'red_std', 'ir_std', 'red_range', 'ir_range', 'correlation']
+        self.feature_names = ['gyro_max', 'accel_max', 'mean_range', 'red_range', 'ir_range', 'red_std', 'ir_std', 'correlation']
 
     def window(self, iterable):
         i = iter(iterable)
@@ -107,17 +107,20 @@ class FeatureExtractor:
             feature_row.extend(motion_traces.max(axis=0))
 
             """LED Features"""
-            # Mean
-            feature_row.extend(led_traces.mean(axis=0))
+            # Mean Range
+            # ir_mean - red_mean
+            led_means = led_traces.mean(axis=0)
+            feature_row.append(led_means[1] - led_means[0])
 
-            # StdDev
-            feature_row.extend(led_traces.std(axis=0))
-
-            # Range
+            # LED Range
+            # max_red - min_red,  max_ir - min_ir
             led_max = led_traces.max(axis=0)
             led_min = led_traces.min(axis=0)
             led_range = np.subtract(led_max, led_min)
             feature_row.extend(led_range)
+
+            # StdDev
+            feature_row.extend(led_traces.std(axis=0))
 
             # Pearson Correlation
             p_corr = np.corrcoef(led_traces, rowvar=False)[0, 1]
