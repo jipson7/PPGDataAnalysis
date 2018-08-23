@@ -1,17 +1,30 @@
 import data
+import pickle
 from sklearn.model_selection import GridSearchCV
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegression, RidgeClassifierCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from keras.wrappers.scikit_learn import KerasClassifier
 
 
-def analyze_classifier(X, y, clf, params={}):
-    clf = GridSearchCV(clf,
-                       param_grid=params, scoring=['accuracy', 'f1'],
-                       cv=5, verbose=1, refit='accuracy')
+MODEL_CACHE = './data-cache/models/'
+
+
+def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
+    # Note the stratified K fold used by GridSearchCV does NOT shuffle.
+    clf = GridSearchCV(clf_og, param_grid=params, scoring=['accuracy', 'f1_weighted'],
+                       cv=5, verbose=1, refit='accuracy', n_jobs=n_jobs,
+                       return_train_score=False, iid=False)
     clf.fit(X, y)
-    print("\nAccuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
+    results = clf.cv_results_
+    clf_name = type(clf_og).__name__
+    print(clf_name + " results:")
+    for param, accuracy, f1 in zip(results['params'], results['mean_test_accuracy'], results['mean_test_f1_weighted']):
+        print("Accuracy: {}, F1-Weighed: {}, Params: {}".format(accuracy, f1, param))
+    print("\nBest Accuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
+    estimator = clf.best_estimator_
+    pickle_path = MODEL_CACHE + clf_name
+    pickle.dump(estimator, open(pickle_path, "wb"))
 
 
 def run_random_forest(X, y):
@@ -20,25 +33,25 @@ def run_random_forest(X, y):
         'n_estimators': [x for x in range(20, 100, 10)],
         'criterion': ['gini']
     }
-    analyze_classifier(X, y, RandomForestClassifier(), parameters)
+    analyze_classifier(X, y, RandomForestClassifier(), params=parameters)
 
 
 def run_logistic_regression(X, y):
     print("\nRunning Logistic Regression")
     parameters = {
-        'C': [0.0001, 0.001, 0.01, 0.1, 1],
+        'C': [0.00001, 0.0001, 0.001, 0.01, 0.1, 1],
         'penalty': ('l1', 'l2')
     }
-    analyze_classifier(X, y, LogisticRegression(), parameters)
+    analyze_classifier(X, y, LogisticRegression(), params=parameters)
 
 
 def run_svc(X, y):
     print("\nRunning Support Vector Classification")
     parameters = {
-        'C': [0.0001, 0.001, 0.01, 0.1, 1, 10],
-        'kernel': ['rbf', 'sigmoid']
+        'C': [0.0001, 0.001, 0.01, 0.1, 1, 10, 100],
+        'kernel': ['rbf', 'sigmoid', 'poly']
     }
-    analyze_classifier(X, y, SVC(), parameters)
+    analyze_classifier(X, y, SVC(), params=parameters)
 
 
 def run_nn(X, y):
@@ -59,7 +72,7 @@ def run_nn(X, y):
     # }
     model_gen = get_model_generator(X.shape[1])
     clf = KerasClassifier(build_fn=model_gen, verbose=0)
-    analyze_classifier(X, y, clf, parameters)
+    analyze_classifier(X, y, clf, params=parameters, n_jobs=1)
 
 
 def run():
