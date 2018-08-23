@@ -3,10 +3,10 @@ import pickle
 import warnings
 from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.svm import SVC
 from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.metrics import classification_report, accuracy_score
+import matplotlib.pyplot as plt
 
 # Used to suppress Fscore ill defined
 warnings.filterwarnings('ignore')
@@ -17,16 +17,19 @@ MODEL_CACHE = './data-cache/models/'
 
 def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     # Note the stratified K fold used by GridSearchCV does NOT shuffle.
-    clf = GridSearchCV(clf_og, param_grid=params, scoring=['accuracy', 'f1_weighted'],
-                       cv=5, verbose=1, refit='accuracy', n_jobs=n_jobs,
+
+    scoring = 'precision_weighted'
+
+    clf = GridSearchCV(clf_og, param_grid=params, scoring=['accuracy', scoring],
+                       cv=5, verbose=1, refit=scoring, n_jobs=n_jobs,
                        return_train_score=False, iid=False)
     clf.fit(X, y)
     results = clf.cv_results_
     clf_name = type(clf_og).__name__
     print(clf_name + " results:")
-    for param, accuracy, f1 in zip(results['params'], results['mean_test_accuracy'], results['mean_test_f1_weighted']):
-        print("Accuracy: {:.3f}, F1-Weighted: {:.3f}, Params: {}".format(accuracy, f1, param))
-    print("\nBest Accuracy {}, Params: {}".format(clf.best_score_, clf.best_params_))
+    for param, accuracy, score in zip(results['params'], results['mean_test_accuracy'], results['mean_test_' + scoring]):
+        print("Accuracy: {:.3f}, {}: {:.3f}, Params: {}".format(accuracy, scoring, score, param))
+    print("\nBest {} {}, Params: {}".format(scoring, clf.best_score_, clf.best_params_))
     estimator = clf.best_estimator_
     pickle_path = MODEL_CACHE + clf_name
     pickle.dump(estimator, open(pickle_path, "wb"))
@@ -59,6 +62,15 @@ def run_svc(X, y):
     analyze_classifier(X, y, SVC(), params=parameters)
 
 
+def run_gradient_boost(X, y):
+    print("\nRunning Gradient Boost Classifier")
+    parameters = {
+        'loss': ['deviance', 'exponential'],
+        'criterion': ['friedman_mse', 'mse']
+    }
+    analyze_classifier(X, y, GradientBoostingClassifier(), params=parameters)
+
+
 def run_nn(X, y):
     print("\nRunning NN")
     # TODO Retune NN. Maybe run it on a beefier server?
@@ -89,19 +101,24 @@ def create_optimized_models(trial_id):
 
     run_svc(X, y)
 
+    run_gradient_boost(X, y)
+
     run_nn(X, y)
 
 
 def apply_model(model_name, trial_ids):
+    from sklearn.metrics import precision_score, confusion_matrix
     for trial_id in trial_ids:
         X, y_true = load_data(trial_id)
         model_path = MODEL_CACHE + model_name
         clf = pickle.load(open(model_path, "rb"))
         y_pred = clf.predict(X)
         print("\nReport for {} run against trial {} :".format(model_name, trial_id))
-        print(classification_report(y_true, y_pred))
         print("Label set: " + str(set(y_pred)))
-        print(accuracy_score(y_true, y_pred))
+        print("Precision-Weighted: " + str(precision_score(y_true, y_pred, average="weighted")))
+        cm = confusion_matrix(y_true, y_pred)
+        data.plot_confusion_matrix(cm, normalize=True, classes=[False, True], title='Normalized confusion matrix')
+        plt.show()
 
 
 def load_data(trial_id):
@@ -121,7 +138,7 @@ if __name__ == '__main__':
     trial_ids = data.list_trials()
 
     training_trial = 17
-    create_optimized_models(training_trial)
+    # create_optimized_models(training_trial)
 
+    trial_ids.remove(training_trial)
     apply_model("RandomForestClassifier", trial_ids)
-
