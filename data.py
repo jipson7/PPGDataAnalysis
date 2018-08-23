@@ -177,7 +177,7 @@ class FeatureExtractor:
     Threshold is defined as the largest distance (max) between any 2 non-null
     O2 Values measured across devices.
     """
-    def create_reliability_label(self, devices, threshold=3.0):
+    def create_reliability_label(self, devices, threshold=2.0):
         from itertools import combinations
         labels = []
         for device in devices:

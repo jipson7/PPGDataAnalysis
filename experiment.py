@@ -126,7 +126,7 @@ def apply_model(model_name, trial_ids):
         print("Label set: " + str(labels))
         print("Precision-Weighted: " + str(precision_score(y_true, y_pred, average="weighted")))
         cm = confusion_matrix(y_true, y_pred)
-        data.plot_confusion_matrix(cm, normalize=True, classes=labels, title='Normalized confusion matrix')
+        data.plot_confusion_matrix(cm, classes=labels, title=model_name + " Confusion Matrix")
         plt.show()
 
 
@@ -138,7 +138,7 @@ def load_data(trial_id):
     X = fe.extract_wrist_features(devices[0])
 
     print("Creating Reliability labels")
-    y = fe.create_reliability_label(devices)
+    y = fe.create_reliability_label(devices, threshold=2.0)
     data.print_label_counts(y)
     return X, y
 
@@ -146,7 +146,7 @@ def load_data(trial_id):
 if __name__ == '__main__':
     trial_ids = data.list_trials()
 
-    training_trial = 17
+    training_trial = 18
     create_optimized_models(training_trial)
 
     trial_ids.remove(training_trial)
