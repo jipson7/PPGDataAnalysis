@@ -22,7 +22,7 @@ def list_trials():
 
 
 def load_devices(trial_id, algo_name='enhanced'):
-    print("\nLoading trial " + str(trial_id))
+    print("\nLoading trial {} with {} algorithm".format(trial_id, algo_name))
 
     pickle_path = TRIAL_CACHE + str(trial_id) + algo_name
 
@@ -47,7 +47,7 @@ def normalize_timestamps(dataframes):
     print("\nNormalizing Timestamps between {} devices".format(len(dataframes)))
 
     def get_common_endpoints(dfs):
-        return max([x.index[1] for x in dfs]),\
+        return max([x.index[0] for x in dfs]),\
                min([x.index[-1] for x in dfs])
 
     sample_range = datetime.timedelta(milliseconds=40)
@@ -103,6 +103,10 @@ def plot_confusion_matrix(cm, classes,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+
+
+def get_df_length(df):
+    return df.index[-1] - df.index[0]
 
 
 class FeatureExtractor:
