@@ -13,7 +13,7 @@ def get_speed(v):
 def extract_sensor_data(data, motion=False, algo_name='enhanced'):
     assert algo_name == 'enhanced' or algo_name == 'maxim'
     index = []
-    columns = ['red', 'ir', 'oxygen', 'hr', 'ratio', 'correlation']
+    columns = ['red', 'ir', 'oxygen', 'hr']
     motion_columns = ['gyro', 'accel']
     rows = []
     for datum in data:
@@ -25,15 +25,13 @@ def extract_sensor_data(data, motion=False, algo_name='enhanced'):
             reading['ir']
         ]
         if algos is not None:
-            enhanced = algos[algo_name]
+            algos_json = algos[algo_name]
             row += [
-                enhanced['oxygen'] if enhanced['oxygen_valid'] == 1 else None,
-                enhanced['hr'] if enhanced['hr_valid'] == 1 else None,
-                enhanced['ratio'],
-                enhanced['correlation']
+                algos_json['oxygen'] if algos_json['oxygen_valid'] == 1 else None,
+                algos_json['hr'] if algos_json['hr_valid'] == 1 else None
             ]
         else:
-            row += [None] * 4
+            row += [None] * 2
         if motion:
             gyro_speed = get_speed(reading['gyro'])
             accel_speed = get_speed(reading['accel'])
