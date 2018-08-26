@@ -10,7 +10,8 @@ def get_speed(v):
     return math.sqrt((v['x']**2) + (v['y']**2) + (v['z']**2))
 
 
-def extract_sensor_data(data, motion=False):
+def extract_sensor_data(data, motion=False, algo_name='enhanced'):
+    assert algo_name == 'enhanced' or algo_name == 'maxim'
     index = []
     columns = ['red', 'ir', 'oxygen', 'hr', 'ratio', 'correlation']
     motion_columns = ['gyro', 'accel']
@@ -24,7 +25,7 @@ def extract_sensor_data(data, motion=False):
             reading['ir']
         ]
         if algos is not None:
-            enhanced = algos['enhanced']
+            enhanced = algos[algo_name]
             row += [
                 enhanced['oxygen'] if enhanced['oxygen_valid'] == 1 else None,
                 enhanced['hr'] if enhanced['hr_valid'] == 1 else None,
@@ -77,17 +78,14 @@ class Trial(db.Model):
                str(self.created) + " - " + \
                str(self.data.count()) + " samples"
 
-    @property
-    def df_wrist(self):
-        df = extract_sensor_data(self.wrist_data, motion=True)
+    def df_wrist(self, algo_name='enhanced'):
+        df = extract_sensor_data(self.wrist_data, motion=True, algo_name=algo_name)
         return remove_duplicate_timestamps(df)
 
-    @property
-    def df_reflective(self):
-        df = extract_sensor_data(self.reflective_data, motion=False)
+    def df_reflective(self, algo_name='enhanced'):
+        df = extract_sensor_data(self.reflective_data, motion=False, algo_name=algo_name)
         return remove_duplicate_timestamps(df)
 
-    @property
     def df_transitive(self):
         data = self.transitive_data
         index = []
@@ -115,18 +113,6 @@ class Trial(db.Model):
     @property
     def transitive_data(self):
         return self.data.filter_by(device=2).all()
-
-    # Prints information but also has the side effect of loading the lazy devices
-    def get_info(self):
-        print("\ndf_wrist")
-        print("columns: " + str(self.df_wrist.columns.tolist()))
-        print("shape  : " + str(self.df_wrist.shape))
-        print("\ndf_reflective")
-        print("columns: " + str(self.df_reflective.columns.tolist()))
-        print("shape  : " + str(self.df_reflective.shape))
-        print("\ndf_transitive")
-        print("columns: " + str(self.df_transitive.columns.tolist()))
-        print("shape  : " + str(self.df_transitive.shape))
 
 
 class Data(db.Model):

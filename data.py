@@ -21,21 +21,20 @@ def list_trials():
         return [trial.id for trial in trials]
 
 
-def load_devices(trial_id):
+def load_devices(trial_id, algo_name='enhanced'):
     print("\nLoading trial " + str(trial_id))
 
-    pickle_path = TRIAL_CACHE + str(trial_id)
+    pickle_path = TRIAL_CACHE + str(trial_id) + algo_name
 
     if os.path.isfile(pickle_path):
         return pickle.load(open(pickle_path, "rb"))
     else:
         with app.app_context():
             trial = Trial.query.get(trial_id)
-            trial.get_info()
             device_list = \
-                normalize_timestamps([trial.df_wrist,
-                                      trial.df_reflective,
-                                      trial.df_transitive])
+                normalize_timestamps([trial.df_wrist(algo_name=algo_name),
+                                      trial.df_reflective(algo_name=algo_name),
+                                      trial.df_transitive()])
             print("Trial load finished.")
             pickle.dump(device_list, open(pickle_path, "wb"))
             return device_list
