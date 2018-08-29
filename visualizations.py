@@ -23,20 +23,20 @@ def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
 
     assert(wrist_oxygen.shape == true_oxygen.shape)
 
-    reliable_count = 0
+    true_reliable_count = 0
     for o1, o2 in zip(wrist_oxygen, true_oxygen):
         difference = np.abs(np.subtract(o1, o2))
         if difference <= threshold:
-            reliable_count += 1
+            true_reliable_count += 1
 
-    print("{} labels were within {} of transitive sensor".format(reliable_count, threshold))
     algo_percent = (wrist_reliable_count / sample_count) * 100
-    actual_precent = (reliable_count / sample_count) * 100
+    actual_precent = (true_reliable_count / wrist_reliable_count) * 100
     print("Algorithm marked {:.1f}% of labels reliable".format(algo_percent))
-    print("{:.1f}% of labels are actually reliable".format(actual_precent))
+    print("Of those, {:.1f}% of labels are actually reliable".format(actual_precent))
+    print("All totalled {} labels were within {} of transitive sensor".format(true_reliable_count, threshold))
 
 
 
 if __name__ == '__main__':
     trial_id = 18
-    visualize_algorithms(trial_id, algo_name='maxim')
+    visualize_algorithms(trial_id, algo_name='enhanced')
