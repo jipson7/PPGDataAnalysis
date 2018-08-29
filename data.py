@@ -144,6 +144,9 @@ class FeatureExtractor:
             feature_row.extend(motion_traces.max(axis=0))
 
             """LED Features"""
+
+            # TODO Extract FFT and derivative of curves
+
             # Mean Range
             # ir_mean - red_mean
             led_means = led_traces.mean(axis=0)
