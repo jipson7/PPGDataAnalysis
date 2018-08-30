@@ -130,6 +130,7 @@ class FeatureExtractor:
     passing to this function.
     """
     def extract_wrist_features(self, wrist_device):
+        from scipy.fftpack import fft
         X = []
         input_columns = ['red', 'ir', 'gyro', 'accel']
         X_raw = wrist_device[input_columns].values
@@ -145,17 +146,16 @@ class FeatureExtractor:
 
             """LED Features"""
 
-            # TODO Extract FFT and derivative of curves
-
-            # Mean Range
-            # ir_mean - red_mean
+            # Mean
             led_means = led_traces.mean(axis=0)
+            # feature_row.extend(led_means)
             feature_row.append(led_means[1] - led_means[0])
 
-            # LED Range
-            # max_red - min_red,  max_ir - min_ir
+            # Max and Mins
             led_max = led_traces.max(axis=0)
+            # feature_row.extend(led_max)
             led_min = led_traces.min(axis=0)
+            # feature_row.extend(led_min)
             led_range = np.subtract(led_max, led_min)
             feature_row.extend(led_range)
 
@@ -167,9 +167,33 @@ class FeatureExtractor:
             p_correlation = p_corr if not np.isnan(p_corr) else 0
             feature_row.append(p_correlation)
 
+            """FFT LED Features"""
+            fft_traces = fft(led_traces, axis=0)
+
+            # Mean
+            fft_means = fft_traces.mean(axis=0)
+            # feature_row.extend(led_means)
+            feature_row.append(fft_means[1] - fft_means[0])
+
+            # Max and Mins
+            fft_max = fft_traces.max(axis=0)
+            # feature_row.extend(led_max)
+            fft_min = fft_traces.min(axis=0)
+            # feature_row.extend(led_min)
+            fft_range = np.subtract(fft_max, fft_min)
+            feature_row.extend(fft_range)
+
+            # StdDev
+            feature_row.extend(fft_traces.std(axis=0))
+
+            # Pearson Correlation
+            p_corr = np.corrcoef(fft_traces, rowvar=False)[0, 1]
+            p_correlation = p_corr if not np.isnan(p_corr) else 0
+            feature_row.append(p_correlation)
+
             X.append(feature_row)
         X = np.array(X)
-        assert len(self.feature_names) == X.shape[1]
+        # assert len(self.feature_names) == X.shape[1]
         return X
 
     def _extract_label(self, device, label='oxygen'):
