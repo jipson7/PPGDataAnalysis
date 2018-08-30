@@ -9,7 +9,7 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from keras.models import save_model, load_model
 import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.metrics import f1_score, confusion_matrix, precision_score
 
 # Used to suppress Fscore ill defined
 warnings.filterwarnings('ignore')
@@ -21,7 +21,7 @@ MODEL_CACHE = './data-cache/models/'
 def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     # Note the stratified K fold used by GridSearchCV does NOT shuffle.
 
-    scoring = 'f1_weighted'
+    scoring = 'precision_weighted'
 
     clf = GridSearchCV(clf_og, param_grid=params, scoring=['accuracy', scoring],
                        cv=5, verbose=0, refit=scoring, n_jobs=n_jobs,
@@ -122,7 +122,7 @@ def create_optimized_models(trial_id):
     run_random_forest(X, y)
     run_logistic_regression(X, y)
     run_gradient_boost(X, y)
-    run_nn(X, y)
+    # run_nn(X, y)
     # run_svc(X, y)
 
 
@@ -145,7 +145,7 @@ def apply_model(model_name, trial_ids):
         labels = sorted(np.unique(y_pred))
         print("\nReport for {} run against trial {} :".format(model_name, trial_id))
         print("Label set: " + str(labels))
-        print("F1-Weighted: " + str(f1_score(y_true, y_pred, average="weighted")))
+        print("Precision-Weighted: " + str(precision_score(y_true, y_pred, average="weighted")))
         cm = confusion_matrix(y_true, y_pred)
         data.plot_confusion_matrix(cm, classes=labels, title=model_name + " Confusion Matrix")
         plt.show()
@@ -168,7 +168,7 @@ if __name__ == '__main__':
     trial_ids = data.list_trials()
 
     training_trial = 18
-    # create_optimized_models(training_trial)
+    create_optimized_models(training_trial)
 
     trial_ids.remove(training_trial)
     apply_model("GradientBoostingClassifier", trial_ids)

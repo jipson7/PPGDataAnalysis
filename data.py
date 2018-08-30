@@ -113,7 +113,6 @@ class FeatureExtractor:
 
     def __init__(self, window_size=100):
         self._window_size = window_size
-        self.feature_names = ['gyro_max', 'accel_max', 'mean_range', 'red_range', 'ir_range', 'red_std', 'ir_std', 'correlation']
 
     def window(self, iterable):
         i = iter(iterable)
@@ -142,20 +141,18 @@ class FeatureExtractor:
 
             """Motion Features"""
             # Max
-            feature_row.extend(motion_traces.max(axis=0))
+            # Note, gyro data feature holds much greater significance than acceleration.
+            feature_row.append(motion_traces.max(axis=0)[0])
 
             """LED Features"""
 
             # Mean
             led_means = led_traces.mean(axis=0)
-            # feature_row.extend(led_means)
             feature_row.append(led_means[1] - led_means[0])
 
             # Max and Mins
             led_max = led_traces.max(axis=0)
-            # feature_row.extend(led_max)
             led_min = led_traces.min(axis=0)
-            # feature_row.extend(led_min)
             led_range = np.subtract(led_max, led_min)
             feature_row.extend(led_range)
 
@@ -170,26 +167,15 @@ class FeatureExtractor:
             """FFT LED Features"""
             fft_traces = fft(led_traces, axis=0)
 
-            # Mean
-            fft_means = fft_traces.mean(axis=0)
-            # feature_row.extend(led_means)
-            feature_row.append(fft_means[1] - fft_means[0])
 
             # Max and Mins
             fft_max = fft_traces.max(axis=0)
-            # feature_row.extend(led_max)
             fft_min = fft_traces.min(axis=0)
-            # feature_row.extend(led_min)
             fft_range = np.subtract(fft_max, fft_min)
             feature_row.extend(fft_range)
 
             # StdDev
             feature_row.extend(fft_traces.std(axis=0))
-
-            # Pearson Correlation
-            p_corr = np.corrcoef(fft_traces, rowvar=False)[0, 1]
-            p_correlation = p_corr if not np.isnan(p_corr) else 0
-            feature_row.append(p_correlation)
 
             X.append(feature_row)
         X = np.array(X)
