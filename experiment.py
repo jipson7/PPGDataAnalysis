@@ -24,14 +24,14 @@ def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     scoring = 'precision_weighted'
 
     clf = GridSearchCV(clf_og, param_grid=params, scoring=['accuracy', scoring],
-                       cv=5, verbose=0, refit=scoring, n_jobs=n_jobs,
+                       cv=5, verbose=1, refit=scoring, n_jobs=n_jobs,
                        return_train_score=False, iid=False)
     clf.fit(X, y)
     results = clf.cv_results_
     clf_name = type(clf_og).__name__
-    # print(clf_name + " results:")
-    # for param, accuracy, score in zip(results['params'], results['mean_test_accuracy'], results['mean_test_' + scoring]):
-    #     print("Accuracy: {:.3f}, {}: {:.3f}, Params: {}".format(accuracy, scoring, score, param))
+    print(clf_name + " results:")
+    for param, accuracy, score in zip(results['params'], results['mean_test_accuracy'], results['mean_test_' + scoring]):
+        print("Accuracy: {:.3f}, {}: {:.3f}, Params: {}".format(accuracy, scoring, score, param))
     print("\nBest {} {}, Params: {}".format(scoring, clf.best_score_, clf.best_params_))
     estimator = clf.best_estimator_
     pickle_path = MODEL_CACHE + clf_name
@@ -105,7 +105,7 @@ def run_nn(X, y):
     #     'batch_size': [32]
     # }
     parameters = {
-        'hidden_layers': [4],
+        'hidden_layers': [1],
         'hidden_layer_size': [8],
         'optimizer': ['rmsprop'],
         'init': ['normal'],

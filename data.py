@@ -145,7 +145,6 @@ class FeatureExtractor:
             feature_row.append(motion_traces.max(axis=0)[0])
 
             """LED Features"""
-
             # Mean
             led_means = led_traces.mean(axis=0)
             feature_row.append(led_means[1] - led_means[0])
@@ -167,7 +166,6 @@ class FeatureExtractor:
             """FFT LED Features"""
             fft_traces = fft(led_traces, axis=0)
 
-
             # Max and Mins
             fft_max = fft_traces.max(axis=0)
             fft_min = fft_traces.min(axis=0)
@@ -177,9 +175,24 @@ class FeatureExtractor:
             # StdDev
             feature_row.extend(fft_traces.std(axis=0))
 
+            """Gradient Features"""
+            gradient = np.diff(led_traces, n=1, axis=0)
+
+            # Mean
+            gradient_means = gradient.mean(axis=0)
+            feature_row.extend(gradient_means)
+
+            # Max and Mins
+            gradient_max = gradient.max(axis=0)
+            gradient_min = gradient.min(axis=0)
+            gradient_range = np.subtract(gradient_max, gradient_min)
+            feature_row.extend(gradient_range)
+
+            # StdDev
+            feature_row.extend(gradient.std(axis=0))
+
             X.append(feature_row)
         X = np.array(X)
-        # assert len(self.feature_names) == X.shape[1]
         return X
 
     def _extract_label(self, device, label='oxygen'):
