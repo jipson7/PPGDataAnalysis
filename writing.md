@@ -9,3 +9,5 @@
 
 ## Why is this hard?
 * hard to collect enough varied data
+
+Show that it generalizes to skin color?

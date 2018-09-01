@@ -169,8 +169,7 @@ class FeatureExtractor:
             # Max and Mins
             fft_max = fft_traces.max(axis=0)
             fft_min = fft_traces.min(axis=0)
-            fft_range = np.subtract(fft_max, fft_min)
-            feature_row.extend(fft_range)
+            feature_row.extend(fft_max + fft_min)
 
             # StdDev
             feature_row.extend(fft_traces.std(axis=0))
@@ -185,8 +184,7 @@ class FeatureExtractor:
             # Max and Mins
             gradient_max = gradient.max(axis=0)
             gradient_min = gradient.min(axis=0)
-            gradient_range = np.subtract(gradient_max, gradient_min)
-            feature_row.extend(gradient_range)
+            feature_row.extend(gradient_max + gradient_min)
 
             # StdDev
             feature_row.extend(gradient.std(axis=0))
