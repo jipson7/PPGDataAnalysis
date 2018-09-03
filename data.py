@@ -3,6 +3,7 @@ import pandas as pd
 from server import app
 from models import Trial
 import matplotlib.pyplot as plt
+from peakdetect import peakdetect
 import pickle
 import os
 import numpy as np
@@ -142,18 +143,16 @@ class FeatureExtractor:
             """Motion Features"""
             # Max
             # Note, gyro data feature holds much greater significance than acceleration.
-            feature_row.append(motion_traces.max(axis=0)[0])
+            feature_row.append(motion_traces.mean(axis=0)[0])
 
             """LED Features"""
-            # Mean
-            led_means = led_traces.mean(axis=0)
-            feature_row.append(led_means[1] - led_means[0])
 
-            # Max and Mins
-            led_max = led_traces.max(axis=0)
-            led_min = led_traces.min(axis=0)
-            led_range = np.subtract(led_max, led_min)
-            feature_row.extend(led_range)
+            # Peak count
+            red_peaks, _ = peakdetect(led_traces[:, 0], 60)
+            feature_row.append(red_peaks.shape[0])
+
+            ir_peaks, _ = peakdetect(led_traces[:, 1], 60)
+            feature_row.append(ir_peaks.shape[0])
 
             # StdDev
             feature_row.extend(led_traces.std(axis=0))
@@ -166,13 +165,10 @@ class FeatureExtractor:
             """FFT LED Features"""
             fft_traces = fft(led_traces, axis=0)
 
-            # Max and Mins
+            # Max
             fft_max = fft_traces.max(axis=0)
-            fft_min = fft_traces.min(axis=0)
-            feature_row.extend(fft_max + fft_min)
+            feature_row.extend(fft_max)
 
-            # StdDev
-            feature_row.extend(fft_traces.std(axis=0))
 
             """Gradient Features"""
             gradient = np.diff(led_traces, n=1, axis=0)
@@ -181,13 +177,9 @@ class FeatureExtractor:
             gradient_means = gradient.mean(axis=0)
             feature_row.extend(gradient_means)
 
-            # Max and Mins
+            # Max
             gradient_max = gradient.max(axis=0)
-            gradient_min = gradient.min(axis=0)
-            feature_row.extend(gradient_max + gradient_min)
-
-            # StdDev
-            feature_row.extend(gradient.std(axis=0))
+            feature_row.extend(gradient_max)
 
             X.append(feature_row)
         X = np.array(X)

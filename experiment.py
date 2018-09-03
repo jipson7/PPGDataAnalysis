@@ -22,7 +22,7 @@ MODEL_CACHE = './data-cache/models/'
 def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
     # Note the stratified K fold used by GridSearchCV does NOT shuffle.
 
-    scoring = 'precision'
+    scoring = 'precision_weighted'
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -118,8 +118,15 @@ def run_nn(X, y):
 
 def run_xg_boost(X, y):
     print("\nRunning Gradient Boost Classifier")
-    parameters = {}
-    analyze_classifier(X, y, xgb.XGBClassifier(), params=parameters)
+    parameters = {
+        'booster': ['gbtree', 'dart', 'gblinear'],
+        'learning_rate': [0, 0.25, 0.5, 0.75, 1],
+        'n_estimators': [x for x in range(10, 100, 10)],
+        'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge'],
+        'n_jobs': [4]
+    }
+    parameters={}
+    analyze_classifier(X, y, xgb.XGBClassifier(), params=parameters, n_jobs=1)
 
 
 def create_optimized_models(trial_ids):
@@ -151,7 +158,7 @@ def apply_model(model_name, trial_ids):
         labels = sorted(np.unique(y_pred))
         print("\nReport for {} run against trial {} :".format(model_name, trial_id))
         print("Label set: " + str(labels))
-        print("Precision: " + str(precision_score(y_true, y_pred)))
+        print("Precision: " + str(precision_score(y_true, y_pred, average='weighted')))
         cm = confusion_matrix(y_true, y_pred)
         data.plot_confusion_matrix(cm, classes=labels, title=model_name + " Confusion Matrix")
         plt.show()
@@ -184,4 +191,4 @@ if __name__ == '__main__':
     create_optimized_models(training_trials)
 
     testing_trials = [22]
-    apply_model("GradientBoostingClassifier", testing_trials)
+    apply_model("XGBClassifier", testing_trials)
