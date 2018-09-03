@@ -11,10 +11,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
+from sklearn.preprocessing import normalize, robust_scale
 
 # Used to suppress Fscore ill defined
 warnings.filterwarnings('ignore')
-
 
 MODEL_CACHE = './data-cache/models/'
 
@@ -175,7 +175,7 @@ def load_data(trial_ids):
         X = fe.extract_wrist_features(devices[0])
 
         print("Creating Reliability labels")
-        y = fe.create_reliability_label(devices, threshold=2.0)
+        y = fe.create_reliability_label(devices, threshold=3.0)
         data.print_label_counts(y)
 
         X_s.append(X)
@@ -187,6 +187,7 @@ def load_data(trial_ids):
 
 if __name__ == '__main__':
     trial_ids = data.list_trials()
+
     training_trials = [13, 18, 20]
     create_optimized_models(training_trials)
 

@@ -7,6 +7,7 @@ from peakdetect import peakdetect
 import pickle
 import os
 import numpy as np
+from scipy.fftpack import rfft
 import itertools
 
 TRIAL_CACHE = './data-cache/trials/'
@@ -130,7 +131,6 @@ class FeatureExtractor:
     passing to this function.
     """
     def extract_wrist_features(self, wrist_device):
-        from scipy.fftpack import fft
         X = []
         input_columns = ['red', 'ir', 'gyro', 'accel']
         X_raw = wrist_device[input_columns].values
@@ -148,10 +148,12 @@ class FeatureExtractor:
             """LED Features"""
 
             # Peak count
-            red_peaks, _ = peakdetect(led_traces[:, 0], 60)
+            peak_threshold = 60
+
+            red_peaks, _ = peakdetect(led_traces[:, 0], peak_threshold)
             feature_row.append(red_peaks.shape[0])
 
-            ir_peaks, _ = peakdetect(led_traces[:, 1], 60)
+            ir_peaks, _ = peakdetect(led_traces[:, 1], peak_threshold)
             feature_row.append(ir_peaks.shape[0])
 
             # StdDev
@@ -163,19 +165,14 @@ class FeatureExtractor:
             feature_row.append(p_correlation)
 
             """FFT LED Features"""
-            fft_traces = fft(led_traces, axis=0)
+            fft_traces = rfft(led_traces, axis=0)
 
             # Max
             fft_max = fft_traces.max(axis=0)
             feature_row.extend(fft_max)
 
-
             """Gradient Features"""
             gradient = np.diff(led_traces, n=1, axis=0)
-
-            # Mean
-            gradient_means = gradient.mean(axis=0)
-            feature_row.extend(gradient_means)
 
             # Max
             gradient_max = gradient.max(axis=0)
