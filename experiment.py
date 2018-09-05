@@ -11,12 +11,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
-from sklearn.preprocessing import normalize, robust_scale
 
 # Used to suppress Fscore ill defined
 warnings.filterwarnings('ignore')
 
 MODEL_CACHE = './data-cache/models/'
+DATA_CACHE = './data-cache/'
+
+FE = data.FeatureExtractor(window_size=100, threshold=3.0)
 
 
 def analyze_classifier(X, y, clf_og, params=None, n_jobs=-1):
@@ -164,18 +166,15 @@ def apply_model(model_name, trial_ids):
         plt.show()
 
 
-def load_data(trial_ids):
+def load_data(trial_ids, algo_name='enhanced'):
+
     X_s = []
     y_s = []
     for trial_id in trial_ids:
-        devices = data.load_devices(trial_id, algo_name="enhanced")
+        devices = data.load_devices(trial_id, algo_name)
 
-        print("Extracting Wrist Features")
-        fe = data.FeatureExtractor(window_size=100)
-        X = fe.extract_wrist_features(devices[0])
+        X, y = FE.extract_tsfresh(devices)
 
-        print("Creating Reliability labels")
-        y = fe.create_reliability_label(devices, threshold=3.0)
         data.print_label_counts(y)
 
         X_s.append(X)
@@ -186,9 +185,9 @@ def load_data(trial_ids):
 
 
 if __name__ == '__main__':
-    trial_ids = data.list_trials()
+    # trial_ids = data.list_trials()
 
-    training_trials = [13, 18, 20]
+    training_trials = [13, 20, 18]
     create_optimized_models(training_trials)
 
     testing_trials = [22]

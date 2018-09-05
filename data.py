@@ -9,6 +9,9 @@ import os
 import numpy as np
 from scipy.fftpack import rfft
 import itertools
+from tsfresh import extract_features, select_features
+from tsfresh.utilities.dataframe_functions import impute
+from tsfresh.feature_extraction.settings import EfficientFCParameters, from_columns, MinimalFCParameters
 
 TRIAL_CACHE = './data-cache/trials/'
 
@@ -23,7 +26,7 @@ def list_trials():
         return [trial.id for trial in trials]
 
 
-def load_devices(trial_id, algo_name='enhanced'):
+def load_devices(trial_id, algo_name, normalize=True):
     print("\nLoading trial {} with {} algorithm".format(trial_id, algo_name))
 
     pickle_path = TRIAL_CACHE + str(trial_id) + algo_name
@@ -33,10 +36,11 @@ def load_devices(trial_id, algo_name='enhanced'):
     else:
         with app.app_context():
             trial = Trial.query.get(trial_id)
-            device_list = \
-                normalize_timestamps([trial.df_wrist(algo_name=algo_name),
-                                      trial.df_reflective(algo_name=algo_name),
-                                      trial.df_transitive()])
+            device_list = [trial.df_wrist(algo_name=algo_name),
+                           trial.df_reflective(algo_name=algo_name),
+                           trial.df_transitive()]
+            if normalize:
+                device_list = normalize_timestamps(device_list)
             print("Trial load finished.")
             pickle.dump(device_list, open(pickle_path, "wb"))
             return device_list
@@ -113,8 +117,10 @@ def get_df_length(df):
 
 class FeatureExtractor:
 
-    def __init__(self, window_size=100):
+    def __init__(self, window_size=100, threshold=3.0):
         self._window_size = window_size
+        self._threshold = threshold
+        self.features = None
 
     def window(self, iterable):
         i = iter(iterable)
@@ -193,7 +199,7 @@ class FeatureExtractor:
     Threshold is defined as the largest distance (max) between any 2 non-null
     O2 Values measured across devices.
     """
-    def create_reliability_label(self, devices, threshold=2.0):
+    def create_reliability_label(self, devices):
         from itertools import combinations
         labels = []
         for device in devices:
@@ -208,10 +214,52 @@ class FeatureExtractor:
 
         y = []
         for row_error in np.array(errors).T:
-            if np.isnan(row_error).any() or row_error.max() > threshold:
+            if np.isnan(row_error).any() or row_error.max() > self._threshold:
                 y.append(False)
             else:
                 y.append(True)
         return np.array(y)
+
+    def windowize_tsfresh(self, X_raw):
+        column_names = np.concatenate((['id', 'time'], X_raw.columns.values))
+
+        X_windowed = []
+
+        print("Windowizing data")
+        for label_idx, window in enumerate(self.window(X_raw.itertuples())):
+            for w in window:
+                w = np.insert(w, 0, label_idx)
+                X_windowed.append(w)
+
+        return pd.DataFrame(X_windowed, columns=column_names)
+
+    def extract_tsfresh(self, devices):
+        wrist_device = devices[0]
+        input_columns = ['red', 'ir', 'gyro']
+        X_raw = wrist_device[input_columns]
+
+        X_windowed = self.windowize_tsfresh(X_raw)
+
+        y = pd.Series(data=self.create_reliability_label(devices))
+
+        print("Extracting Features")
+        if self.features is None:
+            X = extract_features(X_windowed, column_id='id',
+                                 column_sort='time',
+                                 default_fc_parameters=EfficientFCParameters())
+            impute(X)
+            X = select_features(X, y)
+            self.features = from_columns(X)
+        else:
+            X = extract_features(X_windowed, column_id='id',
+                                 column_sort='time',
+                                 kind_to_fc_parameters=self.features)
+            impute(X)
+
+        print("{} features extracted".format(X.shape[1]))
+        return X, y
+
+
+
 
 
