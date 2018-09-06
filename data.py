@@ -3,15 +3,13 @@ import pandas as pd
 from server import app
 from models import Trial
 import matplotlib.pyplot as plt
-from peakdetect import peakdetect
 import pickle
 import os
 import numpy as np
-from scipy.fftpack import rfft
 import itertools
 from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.feature_extraction.settings import EfficientFCParameters, from_columns, MinimalFCParameters
+from tsfresh.feature_extraction.settings import EfficientFCParameters, from_columns, MinimalFCParameters, ComprehensiveFCParameters
 
 TRIAL_CACHE = './data-cache/trials/'
 
@@ -26,7 +24,7 @@ def list_trials():
         return [trial.id for trial in trials]
 
 
-def load_devices(trial_id, algo_name, normalize=True):
+def load_devices(trial_id, algo_name):
     print("\nLoading trial {} with {} algorithm".format(trial_id, algo_name))
 
     pickle_path = TRIAL_CACHE + str(trial_id) + algo_name
@@ -39,8 +37,7 @@ def load_devices(trial_id, algo_name, normalize=True):
             device_list = [trial.df_wrist(algo_name=algo_name),
                            trial.df_reflective(algo_name=algo_name),
                            trial.df_transitive()]
-            if normalize:
-                device_list = normalize_timestamps(device_list)
+            device_list = normalize_timestamps(device_list)
             print("Trial load finished.")
             pickle.dump(device_list, open(pickle_path, "wb"))
             return device_list
@@ -117,12 +114,13 @@ def get_df_length(df):
 
 class FeatureExtractor:
 
-    def __init__(self, window_size=100, threshold=3.0):
+    def __init__(self, window_size=100, threshold=3.0, from_pickle=False):
         self._window_size = window_size
         self._threshold = threshold
+        self._from_pickle = from_pickle
         self.features = None
 
-    def window(self, iterable):
+    def _window(self, iterable):
         i = iter(iterable)
         win = []
         for e in range(0, self._window_size):
@@ -132,66 +130,10 @@ class FeatureExtractor:
             win = win[1:] + [e]
             yield np.array(win)
 
-    """
-    Should normalize timestamps between 2 devices before
-    passing to this function.
-    """
-    def extract_wrist_features(self, wrist_device):
-        X = []
-        input_columns = ['red', 'ir', 'gyro', 'accel']
-        X_raw = wrist_device[input_columns].values
-
-        for raw_sample in self.window(X_raw):
-            feature_row = []
-            led_traces = raw_sample[:, [0, 1]]
-            motion_traces = raw_sample[:, [2, 3]]
-
-            """Motion Features"""
-            # Max
-            # Note, gyro data feature holds much greater significance than acceleration.
-            feature_row.append(motion_traces.mean(axis=0)[0])
-
-            """LED Features"""
-
-            # Peak count
-            peak_threshold = 60
-
-            red_peaks, _ = peakdetect(led_traces[:, 0], peak_threshold)
-            feature_row.append(red_peaks.shape[0])
-
-            ir_peaks, _ = peakdetect(led_traces[:, 1], peak_threshold)
-            feature_row.append(ir_peaks.shape[0])
-
-            # StdDev
-            feature_row.extend(led_traces.std(axis=0))
-
-            # Pearson Correlation
-            p_corr = np.corrcoef(led_traces, rowvar=False)[0, 1]
-            p_correlation = p_corr if not np.isnan(p_corr) else 0
-            feature_row.append(p_correlation)
-
-            """FFT LED Features"""
-            fft_traces = rfft(led_traces, axis=0)
-
-            # Max
-            fft_max = fft_traces.max(axis=0)
-            feature_row.extend(fft_max)
-
-            """Gradient Features"""
-            gradient = np.diff(led_traces, n=1, axis=0)
-
-            # Max
-            gradient_max = gradient.max(axis=0)
-            feature_row.extend(gradient_max)
-
-            X.append(feature_row)
-        X = np.array(X)
-        return X
-
     def _extract_label(self, device, label='oxygen'):
         labels = device[[label]].values
         y = []
-        for w in self.window(labels):
+        for w in self._window(labels):
             y.extend(w[-1])
         return np.array(y)
 
@@ -200,6 +142,7 @@ class FeatureExtractor:
     O2 Values measured across devices.
     """
     def create_reliability_label(self, devices):
+        print("Creating Reliability Labels")
         from itertools import combinations
         labels = []
         for device in devices:
@@ -218,35 +161,41 @@ class FeatureExtractor:
                 y.append(False)
             else:
                 y.append(True)
-        return np.array(y)
+        y = np.array(y)
+        print_label_counts(y)
+        return y
 
-    def windowize_tsfresh(self, X_raw):
+    def _windowize_tsfresh(self, X_raw):
         column_names = np.concatenate((['id', 'time'], X_raw.columns.values))
 
         X_windowed = []
 
         print("Windowizing data")
-        for label_idx, window in enumerate(self.window(X_raw.itertuples())):
+        for label_idx, window in enumerate(self._window(X_raw.itertuples())):
             for w in window:
                 w = np.insert(w, 0, label_idx)
                 X_windowed.append(w)
 
         return pd.DataFrame(X_windowed, columns=column_names)
 
-    def extract_tsfresh(self, devices):
+    def extract_features(self, devices):
         wrist_device = devices[0]
         input_columns = ['red', 'ir', 'gyro']
         X_raw = wrist_device[input_columns]
 
-        X_windowed = self.windowize_tsfresh(X_raw)
+        X_windowed = self._windowize_tsfresh(X_raw)
 
         y = pd.Series(data=self.create_reliability_label(devices))
 
         print("Extracting Features")
         if self.features is None:
+            if self._from_pickle:
+                features = from_columns(pickle.load(open('data-cache/features.pickle', "rb")))
+            else:
+                features = ComprehensiveFCParameters()
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
-                                 default_fc_parameters=EfficientFCParameters())
+                                 default_fc_parameters=features)
             impute(X)
             X = select_features(X, y)
             self.features = from_columns(X)
