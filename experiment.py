@@ -1,5 +1,6 @@
 import data
 import pickle
+import os
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import matplotlib.pyplot as plt
 import numpy as np
@@ -50,8 +51,13 @@ def create_training_data(trial_ids, feature_extractor, algo_name):
     X_s = []
     y_s = []
     for trial_id in trial_ids:
+        pickle_path = "data-cache/training_data/xy-{}-{}-{}.pickle".format(trial_id, algo_name, str(feature_extractor))
+        if os.path.isfile(pickle_path):
+            Xy = pickle.load(open(pickle_path, "rb"))
+            return Xy[0], Xy[1]
         devices = data.load_devices(trial_id, algo_name)
         X, y = feature_extractor.extract_features(devices)
+        pickle.dump([X, y], open(pickle_path, "wb"))
         X_s.append(X)
         y_s.append(y)
     X = pd.concat(X_s, sort=True)
@@ -62,29 +68,34 @@ def create_training_data(trial_ids, feature_extractor, algo_name):
 
 
 if __name__ == '__main__':
-    trial_ids = data.list_trials()
+    # trial_ids = data.list_trials()
 
     ALGO_NAME = 'enhanced'
+    CLF_FROM_PICKLE = False
 
     fe = data.FeatureExtractor(window_size=100, threshold=2.0, from_pickle=False)
-    training_trials = [20, 18, 13]
-    X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
-    # parameters = {
-    #     'booster': ['gbtree', 'dart', 'gblinear'],
-    #     'learning_rate': [0, 0.25, 0.5, 0.75, 1],
-    #     'n_estimators': [x for x in range(10, 100, 10)],
-    #     'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
-    # }
-    parameters = {
-        'booster': ['gbtree'],
-        'learning_rate': [0.4, 0.5, 0.6],
-        'n_estimators': [175, 200, 250, 300, 400, 500],
-        'objective': ['binary:logistic']
-    }
+    if CLF_FROM_PICKLE:
+        clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
+    else:
+        training_trials = [20, 18, 13]
+        X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
-    clf = create_optimized_classifier(X_train, y_train, parameters)
-    pickle_data(clf, X_train)
+        # parameters = {
+        #     'booster': ['gbtree', 'dart', 'gblinear'],
+        #     'learning_rate': [0, 0.25, 0.5, 0.75, 1],
+        #     'n_estimators': [x for x in range(10, 100, 10)],
+        #     'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
+        # }
+        parameters = {
+            'booster': ['gbtree'],
+            'learning_rate': [0.6],
+            'n_estimators': [175],
+            'objective': ['binary:logistic']
+        }
+
+        clf = create_optimized_classifier(X_train, y_train, parameters)
+        pickle_data(clf, X_train)
 
     print("Prepping Validation Data")
     testing_trials = [22]

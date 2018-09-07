@@ -26,9 +26,7 @@ def list_trials():
 
 def load_devices(trial_id, algo_name):
     print("\nLoading trial {} with {} algorithm".format(trial_id, algo_name))
-
     pickle_path = TRIAL_CACHE + str(trial_id) + algo_name
-
     if os.path.isfile(pickle_path):
         return pickle.load(open(pickle_path, "rb"))
     else:
@@ -79,7 +77,6 @@ def print_label_counts(y):
 
 def plot_confusion_matrix(cm, classes,
                           normalize=False,
-                          title='Confusion matrix',
                           cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
@@ -90,7 +87,6 @@ def plot_confusion_matrix(cm, classes,
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
 
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
     plt.colorbar()
     tick_marks = np.arange(len(classes))
     plt.xticks(tick_marks, classes, rotation=45)
@@ -114,7 +110,7 @@ def get_df_length(df):
 
 class FeatureExtractor:
 
-    def __init__(self, window_size=100, threshold=3.0, from_pickle=False):
+    def __init__(self, window_size=100, threshold=2.0, from_pickle=False):
         self._window_size = window_size
         self._threshold = threshold
         self._from_pickle = from_pickle
@@ -206,6 +202,9 @@ class FeatureExtractor:
 
         print("{} features extracted".format(X.shape[1]))
         return X, y
+
+    def __str__(self):
+        return "window{}-threshold{}".format(self._window_size, self._threshold)
 
 
 
