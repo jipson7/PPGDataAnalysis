@@ -187,22 +187,21 @@ class FeatureExtractor:
 
         y = pd.Series(data=self.create_reliability_label(devices))
 
-        print("Extracting Features")
-        if self.features is None:
-            if self._from_pickle:
-                features = from_columns(pickle.load(open('data-cache/features.pickle', "rb")))
-            else:
-                features = ComprehensiveFCParameters()
+        if self.features is None and not self._from_pickle:
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
-                                 default_fc_parameters=features)
+                                 default_fc_parameters=ComprehensiveFCParameters())
             impute(X)
             X = select_features(X, y)
             self.features = from_columns(X)
         else:
+            if self._from_pickle:
+                features = from_columns(pickle.load(open('data-cache/features.pickle', "rb")))
+            else:
+                features = self.features
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
-                                 kind_to_fc_parameters=self.features)
+                                 kind_to_fc_parameters=features)
             impute(X)
 
         print("{} features extracted".format(X.shape[1]))

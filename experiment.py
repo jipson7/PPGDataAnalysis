@@ -11,12 +11,12 @@ import warnings
 warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
 
 
-def pickle_features(clf, X):
+def pickle_data(clf, X):
     importances = clf.feature_importances_
     idx = np.flatnonzero(importances)
     features = X.columns[idx].tolist()
-    print(features)
     pickle.dump(features, open('data-cache/features.pickle', "wb"))
+    pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
 
 def validate_classifier(clf, X, y):
@@ -66,7 +66,7 @@ if __name__ == '__main__':
 
     ALGO_NAME = 'enhanced'
 
-    fe = data.FeatureExtractor(window_size=100, threshold=3.0, from_pickle=False)
+    fe = data.FeatureExtractor(window_size=100, threshold=2.0, from_pickle=False)
     training_trials = [20, 18, 13]
     X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
@@ -78,15 +78,13 @@ if __name__ == '__main__':
     # }
     parameters = {
         'booster': ['gbtree'],
-        'learning_rate': [0.1, 0.5, 0.75],
-        'n_estimators': [10, 100, 200],
-        'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
+        'learning_rate': [0.4, 0.5, 0.6],
+        'n_estimators': [175, 200, 250, 300, 400, 500],
+        'objective': ['binary:logistic']
     }
-    parameters = {}
 
     clf = create_optimized_classifier(X_train, y_train, parameters)
-    pickle_features(clf, X_train)
-    pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
+    pickle_data(clf, X_train)
 
     print("Prepping Validation Data")
     testing_trials = [22]
