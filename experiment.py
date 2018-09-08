@@ -27,8 +27,8 @@ def create_optimized_classifier(X, y, parameters):
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-    clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=scoring,
-                       cv=cv, verbose=1, n_jobs=-1,
+    clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=['accuracy', scoring],
+                       cv=cv, verbose=1, refit=scoring, n_jobs=-1,
                        return_train_score=False, iid=False)
     clf.fit(X, y)
     results = clf.cv_results_
@@ -67,6 +67,7 @@ if __name__ == '__main__':
 
     ALGO_NAME = 'enhanced'
     CLF_FROM_PICKLE = False
+    OPTIMIZE = False
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
@@ -84,7 +85,11 @@ if __name__ == '__main__':
         # }
         parameters = {}
 
-        clf = create_optimized_classifier(X_train, y_train, parameters)
+        if OPTIMIZE:
+            clf = create_optimized_classifier(X_train, y_train, parameters)
+        else:
+            clf = xgb.XGBClassifier(n_jobs=-1)
+            clf.fit(X_train, y_train)
         pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
     print("Prepping Validation Data")
