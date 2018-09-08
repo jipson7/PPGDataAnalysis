@@ -54,12 +54,12 @@ def visualize_algorithms(trial_id, algo_name='enhanced', threshold=2.0):
     print("{}, or {:.1f}%, of labels were within {} of transitive sensor".format(true_reliable_count, actual_precent, threshold))
 
 
-def visualize_classifier(trial_id, algo_name='enhanced'):
+def visualize_classifier(trial_id, algo_name, threshold):
     clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
     devices = data.load_devices(trial_id, algo_name=algo_name)
     wrist = devices[0]
     transitive = devices[2]
-    fe = data.FeatureExtractor(window_size=100, threshold=2.0, from_pickle=True)
+    fe = data.FeatureExtractor(window_size=100, threshold=threshold, from_pickle=True)
     X, y_true = ex.create_training_data([trial_id], fe, algo_name)
     y_pred = clf.predict(X)
 
@@ -90,5 +90,4 @@ if __name__ == '__main__':
 
     # visualize_algorithms(trial_id, algo_name='enhanced')
 
-
-    visualize_classifier(trial_id, algo_name='enhanced')
+    visualize_classifier(trial_id, algo_name='enhanced', threshold=2.5)

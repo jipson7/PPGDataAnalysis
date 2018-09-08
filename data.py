@@ -192,9 +192,10 @@ class FeatureExtractor:
             impute(X)
             X = select_features(X, y)
             self.features = from_columns(X)
+            pickle.dump(self.features, open('data-cache/features.pickle', "wb"))
         else:
             if self._from_pickle:
-                features = from_columns(pickle.load(open('data-cache/features.pickle', "rb")))
+                features = pickle.load(open('data-cache/features.pickle', "rb"))
             else:
                 features = self.features
             X = extract_features(X_windowed, column_id='id',

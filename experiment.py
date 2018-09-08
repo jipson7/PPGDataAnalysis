@@ -12,14 +12,6 @@ import warnings
 warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
 
 
-def pickle_data(clf, X):
-    importances = clf.feature_importances_
-    idx = np.flatnonzero(importances)
-    features = X.columns[idx].tolist()
-    pickle.dump(features, open('data-cache/features.pickle', "wb"))
-    pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
-
-
 def validate_classifier(clf, X, y):
     print("Valdiating classifier")
     y_pred = clf.predict(X)
@@ -63,7 +55,7 @@ def create_training_data(trial_ids, feature_extractor, algo_name):
         X.sort_index(axis=1, inplace=True)
         X_s.append(X)
         y_s.append(y)
-    X = pd.concat(X_s)
+    X = pd.concat(X_s, sort=True)
     y = pd.concat(y_s)
     print("Training Data Created")
     print("X: {}, y: {}".format(X.shape, y.shape))
@@ -76,11 +68,11 @@ if __name__ == '__main__':
     ALGO_NAME = 'enhanced'
     CLF_FROM_PICKLE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=2.5, from_pickle=False)
-
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
+        fe = data.FeatureExtractor(window_size=100, threshold=3.0, from_pickle=True)
     else:
+        fe = data.FeatureExtractor(window_size=100, threshold=3.0, from_pickle=False)
         training_trials = [20, 18, 13]
         X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
@@ -93,7 +85,7 @@ if __name__ == '__main__':
         parameters = {}
 
         clf = create_optimized_classifier(X_train, y_train, parameters)
-        pickle_data(clf, X_train)
+        pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
     print("Prepping Validation Data")
     testing_trials = [22]
