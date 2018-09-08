@@ -1,3 +1,3 @@
 #!/bin/bash
 
-scp -r * logan:~/ppg/
+rsync -ru ./* logan:~/ppg/
