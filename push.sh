@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rsync -ru ./* logan:~/ppg/
+rsync -ruv ./* logan:~/ppg/

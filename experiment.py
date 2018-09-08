@@ -27,8 +27,8 @@ def create_optimized_classifier(X, y, parameters):
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-    clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=['accuracy', scoring],
-                       cv=cv, verbose=1, refit=scoring, n_jobs=-1,
+    clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=scoring,
+                       cv=cv, verbose=1, n_jobs=-1,
                        return_train_score=False, iid=False)
     clf.fit(X, y)
     results = clf.cv_results_
