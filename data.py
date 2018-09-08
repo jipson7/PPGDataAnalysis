@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import pickle
 import os
 import numpy as np
+import time
 import itertools
 from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
@@ -102,6 +103,7 @@ def plot_confusion_matrix(cm, classes,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
+    plt.savefig('figs/cm{}.png'.format(time.time()))
 
 
 def get_df_length(df):

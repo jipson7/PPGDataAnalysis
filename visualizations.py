@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import time
 
 
 def visualize_algorithms(trial_id, algo_name='enhanced', threshold=2.0):
@@ -29,6 +30,7 @@ def visualize_algorithms(trial_id, algo_name='enhanced', threshold=2.0):
     graph_df.plot.line()
     plt.xlabel("Time")
     plt.ylabel("SpO2 (%)")
+    plt.savefig('figs/algo{}.png'.format(time.time()))
     plt.show()
 
     wrist_oxygen = wrist_oxygen.values.flatten()
@@ -78,6 +80,7 @@ def visualize_classifier(trial_id, algo_name='enhanced'):
     graph_df.plot.line()
     plt.xlabel("Time")
     plt.ylabel("SpO2 (%)")
+    plt.savefig('figs/clf{}.png'.format(time.time()))
     plt.show()
 
 
