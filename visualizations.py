@@ -85,7 +85,7 @@ def visualize_classifier(trial_id, algo_name='enhanced'):
 if __name__ == '__main__':
     trial_id = 22
 
-    visualize_algorithms(trial_id, algo_name='enhanced')
+    # visualize_algorithms(trial_id, algo_name='enhanced')
 
 
-    # visualize_classifier(trial_id, algo_name='enhanced')
+    visualize_classifier(trial_id, algo_name='enhanced')

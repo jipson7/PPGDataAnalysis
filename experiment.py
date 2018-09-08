@@ -26,7 +26,7 @@ def validate_classifier(clf, X, y):
     labels = sorted(np.unique(y_pred))
     cm = confusion_matrix(y, y_pred)
     print("Precision: " + str(precision_score(y, y_pred, average='weighted')))
-    data.plot_confusion_matrix(cm, classes=labels, title="Confusion Matrix")
+    data.plot_confusion_matrix(cm, classes=labels)
     plt.show()
 
 
@@ -54,13 +54,16 @@ def create_training_data(trial_ids, feature_extractor, algo_name):
         pickle_path = "data-cache/training_data/xy-{}-{}-{}.pickle".format(trial_id, algo_name, str(feature_extractor))
         if os.path.isfile(pickle_path):
             Xy = pickle.load(open(pickle_path, "rb"))
-            return Xy[0], Xy[1]
-        devices = data.load_devices(trial_id, algo_name)
-        X, y = feature_extractor.extract_features(devices)
-        pickle.dump([X, y], open(pickle_path, "wb"))
+            X = Xy[0]
+            y = Xy[1]
+        else:
+            devices = data.load_devices(trial_id, algo_name)
+            X, y = feature_extractor.extract_features(devices)
+            pickle.dump([X, y], open(pickle_path, "wb"))
+        X.sort_index(axis=1, inplace=True)
         X_s.append(X)
         y_s.append(y)
-    X = pd.concat(X_s, sort=True)
+    X = pd.concat(X_s)
     y = pd.concat(y_s)
     print("Training Data Created")
     print("X: {}, y: {}".format(X.shape, y.shape))
@@ -73,7 +76,7 @@ if __name__ == '__main__':
     ALGO_NAME = 'enhanced'
     CLF_FROM_PICKLE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=2.0, from_pickle=False)
+    fe = data.FeatureExtractor(window_size=100, threshold=2.5, from_pickle=False)
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
@@ -87,12 +90,7 @@ if __name__ == '__main__':
         #     'n_estimators': [x for x in range(10, 100, 10)],
         #     'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
         # }
-        parameters = {
-            'booster': ['gbtree'],
-            'learning_rate': [0.6],
-            'n_estimators': [175],
-            'objective': ['binary:logistic']
-        }
+        parameters = {}
 
         clf = create_optimized_classifier(X_train, y_train, parameters)
         pickle_data(clf, X_train)
