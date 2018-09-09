@@ -77,15 +77,13 @@ if __name__ == '__main__':
         training_trials = [20, 18, 13]
         X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
-        # parameters = {
-        #     'booster': ['gbtree', 'dart', 'gblinear'],
-        #     'learning_rate': [0, 0.25, 0.5, 0.75, 1],
-        #     'n_estimators': [x for x in range(10, 100, 10)],
-        #     'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
-        # }
-        parameters = {}
-
         if OPTIMIZE:
+            parameters = {
+                'booster': ['gbtree', 'dart', 'gblinear'],
+                'learning_rate': [0, 0.25, 0.5, 0.75, 1],
+                'n_estimators': [50, 100, 150, 200, 250, 300],
+                'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
+            }
             clf = create_optimized_classifier(X_train, y_train, parameters)
         else:
             clf = xgb.XGBClassifier(n_jobs=-1)
@@ -93,7 +91,7 @@ if __name__ == '__main__':
         pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
     print("Prepping Validation Data")
-    testing_trials = [22]
+    testing_trials = [21]
     X_test, y_test = create_training_data(testing_trials, fe, algo_name=ALGO_NAME)
 
     validate_classifier(clf, X_test, y_test)
