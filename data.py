@@ -112,11 +112,11 @@ def get_df_length(df):
 
 class FeatureExtractor:
 
-    def __init__(self, window_size=100, threshold=2.0, from_pickle=False):
+    def __init__(self, window_size=100, threshold=3.0):
         self._window_size = window_size
         self._threshold = threshold
-        self._from_pickle = from_pickle
         self.features = None
+        self.features_pickle = 'data-cache/features.pickle'
 
     def _window(self, iterable):
         i = iter(iterable)
@@ -185,16 +185,16 @@ class FeatureExtractor:
 
         y = pd.Series(data=self.create_reliability_label(devices))
 
-        if self.features is None and not self._from_pickle:
+        if self.features is None and not os.path.isfile(self.features_pickle):
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  default_fc_parameters=ComprehensiveFCParameters())
             impute(X)
             X = select_features(X, y)
             self.features = from_columns(X)
-            pickle.dump(self.features, open('data-cache/features.pickle', "wb"))
+            pickle.dump(self.features, open(self.features_pickle, "wb"))
         else:
-            if self._from_pickle:
+            if os.path.isfile(self.features_pickle):
                 features = pickle.load(open('data-cache/features.pickle', "rb"))
             else:
                 features = self.features

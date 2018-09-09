@@ -59,11 +59,9 @@ def visualize_classifier(trial_id, algo_name, threshold):
     devices = data.load_devices(trial_id, algo_name=algo_name)
     wrist = devices[0]
     transitive = devices[2]
-    fe = data.FeatureExtractor(window_size=100, threshold=threshold, from_pickle=True)
+    fe = data.FeatureExtractor(window_size=100, threshold=threshold)
     X, y_true = ex.create_training_data([trial_id], fe, algo_name)
     y_pred = clf.predict(X)
-
-
 
     # Remove first 99 elements to align with label
     wrist_oxygen = wrist[['oxygen']][99:]

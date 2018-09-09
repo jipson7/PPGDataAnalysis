@@ -69,11 +69,11 @@ if __name__ == '__main__':
     CLF_FROM_PICKLE = False
     OPTIMIZE = False
 
+    fe = data.FeatureExtractor(window_size=100, threshold=3.0)
+
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
-        fe = data.FeatureExtractor(window_size=100, threshold=3.0, from_pickle=True)
     else:
-        fe = data.FeatureExtractor(window_size=100, threshold=3.0, from_pickle=False)
         training_trials = [20, 18, 13]
         X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
     print("Prepping Validation Data")
-    testing_trials = [21]
+    testing_trials = [22]
     X_test, y_test = create_training_data(testing_trials, fe, algo_name=ALGO_NAME)
 
     validate_classifier(clf, X_test, y_test)
