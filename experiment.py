@@ -17,13 +17,14 @@ def validate_classifier(clf, X, y):
     y_pred = clf.predict(X)
     labels = sorted(np.unique(y_pred))
     cm = confusion_matrix(y, y_pred)
-    print("Precision: " + str(precision_score(y, y_pred, average='weighted')))
+    print("Precision Weighted: " + str(precision_score(y, y_pred, average='weighted')))
+    print("Precision: " + str(precision_score(y, y_pred)))
     data.plot_confusion_matrix(cm, classes=labels)
     plt.show()
 
 
 def create_optimized_classifier(X, y, parameters):
-    scoring = 'precision_weighted'
+    scoring = 'precision'
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
@@ -79,14 +80,14 @@ if __name__ == '__main__':
 
         if OPTIMIZE:
             parameters = {
-                'booster': ['gbtree', 'dart', 'gblinear'],
-                'learning_rate': [0, 0.25, 0.5, 0.75, 1],
-                'n_estimators': [50, 100, 150, 200, 250, 300],
-                'objective': ['binary:logistic', 'binary:logitraw', 'binary:hinge']
+                'booster': ['gbtree'],
+                'learning_rate': [0.1, 0.5, 0.6],
+                'n_estimators': [150, 300],
+                'objective': ['binary:logistic']
             }
             clf = create_optimized_classifier(X_train, y_train, parameters)
         else:
-            clf = xgb.XGBClassifier(n_jobs=-1)
+            clf = xgb.XGBClassifier(n_jobs=-1, objective='binary:logistic', n_estimators=300, learning_rate=0.5)
             clf.fit(X_train, y_train)
         pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
