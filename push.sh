@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rsync -ruv ./* logan:~/ppg/
+rsync -ruv --exclude 'data-cache' ./* logan:~/ppg/
