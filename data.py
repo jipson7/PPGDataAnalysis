@@ -116,7 +116,6 @@ class FeatureExtractor:
         self._window_size = window_size
         self._threshold = threshold
         self.features = None
-        self.features_pickle = 'data-cache/features.pickle'
 
     def _window(self, iterable):
         i = iter(iterable)
@@ -143,6 +142,7 @@ class FeatureExtractor:
         print("Creating Reliability Labels")
         from itertools import combinations
         labels = []
+        devices = [devices[0], devices[2]]
         for device in devices:
             labels.append(self._extract_label(device))
         errors = []
@@ -176,6 +176,10 @@ class FeatureExtractor:
 
         return pd.DataFrame(X_windowed, columns=column_names)
 
+    @property
+    def pickle_name(self):
+        return 'data-cache/features/feature' + str(self)
+
     def extract_features(self, devices):
         wrist_device = devices[0]
         input_columns = ['red', 'ir', 'gyro']
@@ -185,17 +189,17 @@ class FeatureExtractor:
 
         y = pd.Series(data=self.create_reliability_label(devices))
 
-        if self.features is None and not os.path.isfile(self.features_pickle):
+        if self.features is None and not os.path.isfile(self.pickle_name):
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  default_fc_parameters=ComprehensiveFCParameters())
             impute(X)
             X = select_features(X, y)
             self.features = from_columns(X)
-            pickle.dump(self.features, open(self.features_pickle, "wb"))
+            pickle.dump(self.features, open(self.pickle_name, "wb"))
         else:
-            if os.path.isfile(self.features_pickle):
-                features = pickle.load(open('data-cache/features.pickle', "rb"))
+            if os.path.isfile(self.pickle_name):
+                features = pickle.load(open(self.pickle_name, "rb"))
             else:
                 features = self.features
             X = extract_features(X_windowed, column_id='id',
