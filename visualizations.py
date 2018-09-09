@@ -64,15 +64,20 @@ def visualize_classifier(trial_id, algo_name, threshold):
     y_pred = clf.predict(X)
 
 
-    wrist_oxygen = wrist[['oxygen']].where(y_pred)
-    true_oxygen = transitive[['oxygen']]
+
+    # Remove first 99 elements to align with label
+    wrist_oxygen = wrist[['oxygen']][99:]
+    true_oxygen = transitive[['oxygen']][99:]
+    y_pred = y_pred.reshape(wrist_oxygen.shape)
+
+    wrist_oxygen_clean = wrist_oxygen.where(y_pred)
+
 
     wrist_oxygen.columns = ['Wrist Oxygen']
+    wrist_oxygen_clean.columns = ['Wrist Oxygen Reliable']
     true_oxygen.columns = ['Fingertip Oxygen']
 
-
-
-    graph_df = pd.concat([wrist_oxygen, true_oxygen], axis=1, sort=True)
+    graph_df = pd.concat([wrist_oxygen, true_oxygen, wrist_oxygen_clean], axis=1, sort=True)
 
     assert(wrist_oxygen.shape == true_oxygen.shape)
     assert(graph_df.shape[0] == wrist_oxygen.shape[0])
@@ -80,14 +85,14 @@ def visualize_classifier(trial_id, algo_name, threshold):
     graph_df.plot.line()
     plt.xlabel("Time")
     plt.ylabel("SpO2 (%)")
+    plt.ylim(ymin=56, ymax=100)
     plt.savefig('figs/clf{}.png'.format(time.time()))
     plt.show()
-
 
 
 if __name__ == '__main__':
     trial_id = 22
 
-    # visualize_algorithms(trial_id, algo_name='enhanced')
+    # visualize_algorithms(trial_id, algo_name='enhanced', threshold=2.0)
 
-    visualize_classifier(trial_id, algo_name='enhanced', threshold=2.5)
+    visualize_classifier(trial_id, algo_name='enhanced', threshold=3.0)
