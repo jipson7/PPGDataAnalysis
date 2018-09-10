@@ -142,7 +142,7 @@ class FeatureExtractor:
         print("Creating Reliability Labels")
         from itertools import combinations
         labels = []
-        devices = [devices[0], devices[2]]
+        devices = [devices[0], devices[1]]
         for device in devices:
             labels.append(self._extract_label(device))
         errors = []
