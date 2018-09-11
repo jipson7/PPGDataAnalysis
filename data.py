@@ -104,6 +104,7 @@ def plot_confusion_matrix(cm, classes,
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.savefig('figs/cm{}.png'.format(time.time()))
+    plt.show()
 
 
 def get_df_length(df):

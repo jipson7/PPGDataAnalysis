@@ -2,7 +2,6 @@ import data
 import pickle
 import os
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
@@ -20,7 +19,6 @@ def validate_classifier(clf, X, y):
     print("Precision Weighted: " + str(precision_score(y, y_pred, average='weighted')))
     print("Precision: " + str(precision_score(y, y_pred)))
     data.plot_confusion_matrix(cm, classes=labels)
-    plt.show()
 
 
 def create_optimized_classifier(X, y, parameters):
@@ -70,7 +68,7 @@ if __name__ == '__main__':
     CLF_FROM_PICKLE = False
     OPTIMIZE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=3.0)
+    fe = data.FeatureExtractor(window_size=100, threshold=2.0)
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
