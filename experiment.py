@@ -7,6 +7,7 @@ from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
 import pandas as pd
 import warnings
+from data import N_JOBS
 
 warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
 
@@ -27,7 +28,7 @@ def create_optimized_classifier(X, y, parameters):
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
     clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=['accuracy', scoring],
-                       cv=cv, verbose=1, refit=scoring, n_jobs=-1,
+                       cv=cv, verbose=1, refit=scoring, n_jobs=N_JOBS,
                        return_train_score=False, iid=False)
     clf.fit(X, y)
     results = clf.cv_results_
@@ -68,12 +69,12 @@ if __name__ == '__main__':
     CLF_FROM_PICKLE = False
     OPTIMIZE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=1.0)
+    fe = data.FeatureExtractor(window_size=100, threshold=3.0)
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
     else:
-        training_trials = [20, 18, 13]
+        training_trials = [20, 18, 13, 22]
         X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
         if OPTIMIZE:
@@ -85,12 +86,12 @@ if __name__ == '__main__':
             }
             clf = create_optimized_classifier(X_train, y_train, parameters)
         else:
-            clf = xgb.XGBClassifier(n_jobs=-1, objective='binary:logistic', n_estimators=300, learning_rate=0.5)
+            clf = xgb.XGBClassifier(n_jobs=4, objective='binary:logistic', n_estimators=300, learning_rate=0.5)
             clf.fit(X_train, y_train)
         pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
     print("Prepping Validation Data")
-    testing_trials = [22]
+    testing_trials = [21]
     X_test, y_test = create_training_data(testing_trials, fe, algo_name=ALGO_NAME)
 
     validate_classifier(clf, X_test, y_test)

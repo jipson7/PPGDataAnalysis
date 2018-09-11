@@ -16,6 +16,8 @@ TRIAL_CACHE = './data-cache/trials/'
 
 np.random.seed(42)
 
+N_JOBS = 4
+
 
 def list_trials():
     with app.app_context():
@@ -193,9 +195,10 @@ class FeatureExtractor:
         if self.features is None and not os.path.isfile(self.pickle_name):
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
+                                 n_jobs=N_JOBS,
                                  default_fc_parameters=ComprehensiveFCParameters())
             impute(X)
-            X = select_features(X, y)
+            X = select_features(X, y, n_jobs=N_JOBS)
             self.features = from_columns(X)
             pickle.dump(self.features, open(self.pickle_name, "wb"))
         else:
@@ -205,6 +208,7 @@ class FeatureExtractor:
                 features = self.features
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
+                                 n_jobs=N_JOBS,
                                  kind_to_fc_parameters=features)
             impute(X)
 
