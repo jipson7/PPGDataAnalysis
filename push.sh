@@ -1,3 +1,3 @@
 #!/bin/bash
 
- rsync -ruv --exclude 'data-cache' ./* swift155:~/ppg/
+ rsync -ruv --exclude 'data-cache' ./* mel:/scratch/caleb/ppg
