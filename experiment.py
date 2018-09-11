@@ -68,7 +68,7 @@ if __name__ == '__main__':
     CLF_FROM_PICKLE = False
     OPTIMIZE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=2.0)
+    fe = data.FeatureExtractor(window_size=100, threshold=1.0)
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
