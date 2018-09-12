@@ -1,3 +1,4 @@
+import datetime
 import data
 import experiment as ex
 import pickle
@@ -5,6 +6,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+import math
 
 
 def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
@@ -84,16 +86,41 @@ def visualize_classifier(trial_id, algo_name, threshold):
     graph_df.plot.line(color=['red', 'blue', 'black'])
     plt.xlabel("Time")
     plt.ylabel("SpO2 (%)")
-    plt.ylim(ymin=56, ymax=100)
+    plt.ylim(ymin=56, ymax=105)
     plt.savefig('figs/clf{}.png'.format(time.time()))
     plt.show()
 
-    print_stats(wrist_oxygen, true_oxygen, threshold)
+    print_stats(wrist_oxygen_clean, true_oxygen, threshold)
+
+    # Get MSE
+    mse_wrist = rmse(wrist_oxygen, true_oxygen)
+    mse_wrist_clean = rmse(wrist_oxygen_clean, true_oxygen)
+    print("MSE Before: {}, After: {}".format(mse_wrist, mse_wrist_clean))
+
+    # Longest Nan Wait
+    n = max_consecutive_nans(wrist_oxygen_clean.values.flatten())
+    longest_window = datetime.timedelta(seconds=(n * 40) / 1000)
+    print("Longest NaN window: {}".format(longest_window)) # In seconds
+
+
+def rmse(d1, d2):
+    d1 = d1.values.flatten()
+    d2 = d2.values.flatten()
+    return math.sqrt(np.nanmean((np.subtract(d2, d1)) ** 2))
+
+
+def max_consecutive_nans(a):
+    mask = np.concatenate(([False], np.isnan(a), [False]))
+    if ~mask.any():
+        return 0
+    else:
+        idx = np.nonzero(mask[1:] != mask[:-1])[0]
+        return (idx[1::2] - idx[::2]).max()
 
 
 if __name__ == '__main__':
-    trial_id = 22
+    trial_id = 21
 
-    # visualize_algorithms(trial_id, algo_name='maxim', threshold=1.0)
+    visualize_algorithms(trial_id, algo_name='enhanced', threshold=4.0)
 
-    visualize_classifier(trial_id, algo_name='enhanced', threshold=1.0)
+    visualize_classifier(trial_id, algo_name='enhanced', threshold=4.0)
