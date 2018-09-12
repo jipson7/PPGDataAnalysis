@@ -66,10 +66,10 @@ if __name__ == '__main__':
     # trial_ids = data.list_trials()
 
     ALGO_NAME = 'enhanced'
-    CLF_FROM_PICKLE = False
+    CLF_FROM_PICKLE = True
     OPTIMIZE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=3.0)
+    fe = data.FeatureExtractor(window_size=100, threshold=4.0)
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))

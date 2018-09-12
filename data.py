@@ -16,7 +16,7 @@ TRIAL_CACHE = './data-cache/trials/'
 
 np.random.seed(42)
 
-N_JOBS = 4
+N_JOBS = 8
 
 
 def list_trials():
