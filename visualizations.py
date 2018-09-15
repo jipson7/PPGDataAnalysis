@@ -95,7 +95,7 @@ def visualize_classifier(trial_id, algo_name, threshold):
     # Get MSE
     mse_wrist = rmse(wrist_oxygen, true_oxygen)
     mse_wrist_clean = rmse(wrist_oxygen_clean, true_oxygen)
-    print("MSE Before: {}, After: {}".format(mse_wrist, mse_wrist_clean))
+    print("RMSE Before: {}, After: {}".format(mse_wrist, mse_wrist_clean))
 
     # Longest Nan Wait
     n = max_consecutive_nans(wrist_oxygen_clean.values.flatten())
@@ -119,8 +119,8 @@ def max_consecutive_nans(a):
 
 
 if __name__ == '__main__':
-    trial_id = 21
+    trial_id = 23
 
-    visualize_algorithms(trial_id, algo_name='enhanced', threshold=4.0)
+    visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0)
 
-    visualize_classifier(trial_id, algo_name='enhanced', threshold=4.0)
+    visualize_classifier(trial_id, algo_name='enhanced', threshold=1.0)

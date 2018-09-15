@@ -63,18 +63,18 @@ def create_training_data(trial_ids, feature_extractor, algo_name):
 
 
 if __name__ == '__main__':
-    # trial_ids = data.list_trials()
+    trial_ids = data.list_trials()
 
     ALGO_NAME = 'enhanced'
-    CLF_FROM_PICKLE = True
+    CLF_FROM_PICKLE = False
     OPTIMIZE = False
 
-    fe = data.FeatureExtractor(window_size=100, threshold=4.0)
+    fe = data.FeatureExtractor(window_size=100, threshold=3.0)
 
     if CLF_FROM_PICKLE:
         clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
     else:
-        training_trials = [20, 18, 13, 22]
+        training_trials = [24, 22, 21]
         X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
         if OPTIMIZE:
@@ -86,12 +86,13 @@ if __name__ == '__main__':
             }
             clf = create_optimized_classifier(X_train, y_train, parameters)
         else:
-            clf = xgb.XGBClassifier(n_jobs=4, objective='binary:logistic', n_estimators=300, learning_rate=0.5)
+            # clf = xgb.XGBClassifier(n_jobs=4, objective='binary:logistic', n_estimators=300, learning_rate=0.5)
+            clf = xgb.XGBClassifier(n_jobs=N_JOBS)
             clf.fit(X_train, y_train)
         pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
 
     print("Prepping Validation Data")
-    testing_trials = [21]
+    testing_trials = [23]
     X_test, y_test = create_training_data(testing_trials, fe, algo_name=ALGO_NAME)
 
     validate_classifier(clf, X_test, y_test)
