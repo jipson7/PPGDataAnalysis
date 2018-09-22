@@ -29,9 +29,10 @@ def print_stats(wrist_device, true_device, threshold):
     print("Positive Labels: " + str(true_reliable_count))
 
 
-if __name__ == '__main__':
-    TRIAL = 23
-    ALGO = 'enhanced'
+# if __name__ == '__main__':
+#     TRIAL = 23
+for TRIAL in data.list_trials():
+    ALGO = 'maxim'
     THRESHOLD = 1.0
 
     devices = data.load_devices(TRIAL, algo_name=ALGO)

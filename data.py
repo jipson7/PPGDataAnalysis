@@ -24,7 +24,7 @@ def list_trials():
         trials = Trial.query.all()
         for trial in trials:
             print(trial)
-        return [trial.id for trial in trials]
+        return sorted([trial.id for trial in trials])
 
 
 def load_devices(trial_id, algo_name):
