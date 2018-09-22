@@ -9,8 +9,8 @@ import math
 from examine import print_stats
 
 
-def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
-    devices = data.load_devices(trial_id, algo_name=algo_name)
+def visualize_algorithms(trial_id, dl):
+    devices = dl.load_devices(trial_id)
 
     wrist_oxygen = devices[0][['oxygen']]
     true_oxygen = devices[1][['oxygen']]
@@ -28,7 +28,7 @@ def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
     plt.ylabel("SpO2 (%)")
     plt.show()
 
-    print_stats(wrist_oxygen, true_oxygen, threshold)
+    print_stats(wrist_oxygen, true_oxygen, dl.threshold)
 
 
 def visualize_classifier(trial_id, algo_name, threshold):
@@ -36,7 +36,7 @@ def visualize_classifier(trial_id, algo_name, threshold):
     devices = data.load_devices(trial_id, algo_name=algo_name)
     wrist = devices[0]
     truth = devices[1]
-    fe = data.FeatureExtractor(window_size=100, threshold=threshold)
+    fe = data.DataLoader(window_size=100, threshold=threshold)
     X, y_true = ex.create_training_data([trial_id], fe, algo_name)
     y_pred = clf.predict(X)
 
@@ -94,6 +94,8 @@ def max_consecutive_nans(a):
 if __name__ == '__main__':
     trial_id = 23
 
-    visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0)
+    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim')
+
+    visualize_algorithms(trial_id, dl)
 
     visualize_classifier(trial_id, algo_name='enhanced', threshold=1.0)

@@ -1,22 +1,20 @@
 import datetime
 import pandas as pd
+import pickle
+import os
 from server import app
 from models import Trial
 import matplotlib.pyplot as plt
-import pickle
-import os
 import numpy as np
-import time
 import itertools
 from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.feature_extraction.settings import EfficientFCParameters, from_columns, MinimalFCParameters, ComprehensiveFCParameters
+from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
 
-TRIAL_CACHE = './data-cache/trials/'
 
 np.random.seed(42)
-
-N_JOBS = 8
+N_JOBS = 16
+CACHE_ROOT = './local-cache/'
 
 
 def list_trials():
@@ -25,23 +23,6 @@ def list_trials():
         for trial in trials:
             print(trial)
         return sorted([trial.id for trial in trials])
-
-
-def load_devices(trial_id, algo_name):
-    print("\nLoading trial {} with {} algorithm".format(trial_id, algo_name))
-    pickle_path = TRIAL_CACHE + str(trial_id) + algo_name
-    if os.path.isfile(pickle_path):
-        return pickle.load(open(pickle_path, "rb"))
-    else:
-        with app.app_context():
-            trial = Trial.query.get(trial_id)
-            device_list = [trial.df_wrist(algo_name=algo_name),
-                           trial.df_reflective(algo_name=algo_name),
-                           trial.df_transitive()]
-            device_list = normalize_timestamps(device_list)
-            print("Trial load finished.")
-            pickle.dump(device_list, open(pickle_path, "wb"))
-            return device_list
 
 
 def normalize_timestamps(dataframes):
@@ -112,17 +93,50 @@ def get_df_length(df):
     return df.index[-1] - df.index[0]
 
 
-class FeatureExtractor:
+class DataLoader:
 
-    def __init__(self, window_size=100, threshold=3.0):
-        self._window_size = window_size
-        self._threshold = threshold
-        self.features = None
+    def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features=None):
+        self.window_size = window_size
+        self.threshold = threshold
+        self.algo = algo_name
+        self.features = features
+
+    def load(self, trial_ids):
+        pickle_path = CACHE_ROOT + 'xy/' + ','.join([str(x) for x in sorted(trial_ids)]) + str(self) + '.pickle'
+        if os.path.isfile(pickle_path):
+            Xy = pickle.load(open(pickle_path, "rb"))
+            return Xy[0], Xy[1]
+        X_s = []
+        y_s = []
+        for trial_id in trial_ids:
+            X, y = self._extract_features(trial_id)
+            X.sort_index(axis=1, inplace=True)
+            X_s.append(X)
+            y_s.append(y)
+        X = pd.concat(X_s, sort=True)
+        y = pd.concat(y_s)
+        print("Filtering features")
+        X = select_features(X, y, n_jobs=N_JOBS)
+        print("Training Data Created")
+        print("X: {}, y: {}".format(X.shape, y.shape))
+        pickle.dump([X, y], open(pickle_path, "wb"))
+        return X, y
+
+    def _load_devices(self, trial_id):
+        print("\nLoading trial {} with {} algorithm".format(trial_id, self.algo))
+        with app.app_context():
+            trial = Trial.query.get(trial_id)
+            device_list = [trial.df_wrist(algo_name=self.algo),
+                           trial.df_reflective(algo_name=self.algo),
+                           trial.df_transitive()]
+            device_list = normalize_timestamps(device_list)
+            print("Trial load finished.")
+            return device_list
 
     def _window(self, iterable):
         i = iter(iterable)
         win = []
-        for e in range(0, self._window_size):
+        for e in range(0, self.window_size):
             win.append(next(i))
         yield np.array(win)
         for e in i:
@@ -140,11 +154,11 @@ class FeatureExtractor:
     Threshold is defined as the largest distance (max) between any 2 non-null
     O2 Values measured across devices.
     """
-    def create_reliability_label(self, devices):
+    def _create_reliability_label(self, devices):
         print("Creating Reliability Labels")
         from itertools import combinations
         labels = []
-        devices = [devices[0], devices[1]]
+        devices = [devices[0], devices[1]]  # Throw away transitive device
         for device in devices:
             labels.append(self._extract_label(device))
         errors = []
@@ -157,7 +171,7 @@ class FeatureExtractor:
 
         y = []
         for row_error in np.array(errors).T:
-            if np.isnan(row_error).any() or row_error.max() > self._threshold:
+            if np.isnan(row_error).any() or row_error.max() > self.threshold:
                 y.append(False)
             else:
                 y.append(True)
@@ -178,46 +192,31 @@ class FeatureExtractor:
 
         return pd.DataFrame(X_windowed, columns=column_names)
 
-    @property
-    def pickle_name(self):
-        return 'data-cache/features/feature' + str(self)
-
-    def extract_features(self, devices):
+    def _extract_features(self, trial_id):
+        devices = self._load_devices(trial_id)
         wrist_device = devices[0]
-        input_columns = ['red', 'ir', 'gyro']
+        input_columns = ['red', 'ir', 'gyro', 'accel']
         X_raw = wrist_device[input_columns]
 
         X_windowed = self._windowize_tsfresh(X_raw)
 
-        y = pd.Series(data=self.create_reliability_label(devices))
+        y = pd.Series(data=self._create_reliability_label(devices))
 
-        if self.features is None and not os.path.isfile(self.pickle_name):
+        if self.features is None:
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  n_jobs=N_JOBS,
                                  default_fc_parameters=ComprehensiveFCParameters())
-            impute(X)
-            X = select_features(X, y, n_jobs=N_JOBS)
-            self.features = from_columns(X)
-            pickle.dump(self.features, open(self.pickle_name, "wb"))
         else:
-            if os.path.isfile(self.pickle_name):
-                features = pickle.load(open(self.pickle_name, "rb"))
-            else:
-                features = self.features
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  n_jobs=N_JOBS,
-                                 kind_to_fc_parameters=features)
-            impute(X)
+                                 kind_to_fc_parameters=self.features)
 
-        print("{} features extracted".format(X.shape[1]))
+        impute(X)
+
+        print("{} features extracted for trial {}".format(X.shape[1], trial_id))
         return X, y
 
     def __str__(self):
-        return "window{}-threshold{}".format(self._window_size, self._threshold)
-
-
-
-
-
+        return "type-{}-{}-{}".format(self.threshold, self.window_size, self.algo)

@@ -1,24 +1,23 @@
 import data
 import pickle
-import os
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
-import pandas as pd
 import warnings
-from data import N_JOBS
+from data import N_JOBS, CACHE_ROOT
+from tsfresh.feature_extraction.settings import from_columns
 
 warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
 
 
-def validate_classifier(clf, X, y):
+def validate_classifier(clf, X_test, y_test):
     print("Valdiating classifier")
-    y_pred = clf.predict(X)
+    y_pred = clf.predict(X_test)
     labels = sorted(np.unique(y_pred))
-    cm = confusion_matrix(y, y_pred)
-    print("Precision Weighted: " + str(precision_score(y, y_pred, average='weighted')))
-    print("Precision: " + str(precision_score(y, y_pred)))
+    cm = confusion_matrix(y_test, y_pred)
+    print("Precision Weighted: " + str(precision_score(y_test, y_pred, average='weighted')))
+    print("Precision: " + str(precision_score(y_test, y_pred)))
     data.plot_confusion_matrix(cm, classes=labels)
 
 
@@ -39,60 +38,26 @@ def create_optimized_classifier(X, y, parameters):
     return clf.best_estimator_
 
 
-def create_training_data(trial_ids, feature_extractor, algo_name):
-    X_s = []
-    y_s = []
-    for trial_id in trial_ids:
-        pickle_path = "data-cache/training_data/xy-{}-{}-{}.pickle".format(trial_id, algo_name, str(feature_extractor))
-        if os.path.isfile(pickle_path):
-            Xy = pickle.load(open(pickle_path, "rb"))
-            X = Xy[0]
-            y = Xy[1]
-        else:
-            devices = data.load_devices(trial_id, algo_name)
-            X, y = feature_extractor.extract_features(devices)
-            pickle.dump([X, y], open(pickle_path, "wb"))
-        X.sort_index(axis=1, inplace=True)
-        X_s.append(X)
-        y_s.append(y)
-    X = pd.concat(X_s, sort=True)
-    y = pd.concat(y_s)
-    print("Training Data Created")
-    print("X: {}, y: {}".format(X.shape, y.shape))
-    return X, y
+def create_features_pickle(trials, data_loader, clf):
+    X, y = data_loader.load(trials)
+    clf.fit(X, y)
+    features = list(X)
+    feature_importances = clf.feature_importances_
+    important_feature_idx = np.where(feature_importances)[0]
+    features = list(np.array(features)[important_feature_idx])
+
+    pickle_path = CACHE_ROOT + 'features.pickle'
+
+    pickle.dump(from_columns(features), open(pickle_path, "wb"))
 
 
 if __name__ == '__main__':
-    trial_ids = data.list_trials()
+    trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
 
-    ALGO_NAME = 'enhanced'
-    CLF_FROM_PICKLE = False
-    OPTIMIZE = False
+    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim')
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS)
+    create_features_pickle(trial_ids, dl, clf)
 
-    fe = data.FeatureExtractor(window_size=100, threshold=3.0)
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS)
 
-    if CLF_FROM_PICKLE:
-        clf = pickle.load(open('data-cache/classifier.pickle', "rb"))
-    else:
-        training_trials = [24, 22, 21]
-        X_train, y_train = create_training_data(training_trials, fe, algo_name=ALGO_NAME)
 
-        if OPTIMIZE:
-            parameters = {
-                'booster': ['gbtree'],
-                'learning_rate': [0.1, 0.5, 0.6],
-                'n_estimators': [150, 300],
-                'objective': ['binary:logistic']
-            }
-            clf = create_optimized_classifier(X_train, y_train, parameters)
-        else:
-            # clf = xgb.XGBClassifier(n_jobs=4, objective='binary:logistic', n_estimators=300, learning_rate=0.5)
-            clf = xgb.XGBClassifier(n_jobs=N_JOBS)
-            clf.fit(X_train, y_train)
-        pickle.dump(clf, open('data-cache/classifier.pickle', "wb"))
-
-    print("Prepping Validation Data")
-    testing_trials = [23]
-    X_test, y_test = create_training_data(testing_trials, fe, algo_name=ALGO_NAME)
-
-    validate_classifier(clf, X_test, y_test)
