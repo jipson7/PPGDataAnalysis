@@ -1,24 +1,12 @@
 import data
-import pickle
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
 import warnings
-from data import N_JOBS, CACHE_ROOT
-from tsfresh.feature_extraction.settings import from_columns
+from data import N_JOBS
 
 warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
-
-
-def validate_classifier(clf, X_test, y_test):
-    print("Valdiating classifier")
-    y_pred = clf.predict(X_test)
-    labels = sorted(np.unique(y_pred))
-    cm = confusion_matrix(y_test, y_pred)
-    print("Precision Weighted: " + str(precision_score(y_test, y_pred, average='weighted')))
-    print("Precision: " + str(precision_score(y_test, y_pred)))
-    data.plot_confusion_matrix(cm, classes=labels)
 
 
 def create_optimized_classifier(X, y, parameters):
@@ -38,26 +26,34 @@ def create_optimized_classifier(X, y, parameters):
     return clf.best_estimator_
 
 
-def create_features_pickle(trials, data_loader, clf):
-    X, y = data_loader.load(trials)
-    clf.fit(X, y)
-    features = list(X)
-    feature_importances = clf.feature_importances_
-    important_feature_idx = np.where(feature_importances)[0]
-    features = list(np.array(features)[important_feature_idx])
+def create_average_cm(clf, trial_ids, data_loader):
+    cms = []
+    for trial_id in trial_ids:
+        training_ids = trial_ids.copy()
+        training_ids.remove(trial_id)
+        cm = create_cm(clf, training_ids, trial_id, data_loader)
+        cms.append(cm)
+    avg_cm = np.average(cms, axis=0)
+    data.plot_confusion_matrix(avg_cm)
 
-    pickle_path = CACHE_ROOT + 'features.pickle'
 
-    pickle.dump(from_columns(features), open(pickle_path, "wb"))
+def create_cm(clf, training_ids, test_id, data_loader):
+    X_train, y_train = data_loader.load(training_ids)
+    clf.fit(X_train, y_train)
+    X_test, y_test = data_loader.load([test_id])
+    y_pred = clf.predict(X_test)
+    print("Trial {} results: ".format(test_id))
+    print("Precision Weighted: " + str(precision_score(y_test, y_pred, average='weighted')))
+    print("Precision: " + str(precision_score(y_test, y_pred)))
+    return confusion_matrix(y_test, y_pred)
 
 
 if __name__ == '__main__':
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
 
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS)
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim')
-    clf = xgb.XGBClassifier(n_jobs=N_JOBS)
-    create_features_pickle(trial_ids, dl, clf)
 
-    clf = xgb.XGBClassifier(n_jobs=N_JOBS)
+    create_average_cm(clf, trial_ids, dl)
 
 

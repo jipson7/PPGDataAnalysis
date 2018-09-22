@@ -62,13 +62,14 @@ def print_label_counts(y):
         print("Label: {}, Count: {}".format(label, count))
 
 
-def plot_confusion_matrix(cm, classes,
+def plot_confusion_matrix(cm,
                           normalize=False,
                           cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
+    classes =  sorted([True, False])
     plt.figure()
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -105,6 +106,7 @@ class DataLoader:
         self.threshold = threshold
         self.algo = algo_name
         self.features = features
+        self.selected_features = None
 
     def load(self, trial_ids):
         X_s = []
@@ -123,8 +125,12 @@ class DataLoader:
             y_s.append(y)
         X = pd.concat(X_s, sort=True)
         y = pd.concat(y_s)
-        print("Filtering features")
-        X = select_features(X, y, n_jobs=N_JOBS)
+        if self.selected_features is None:
+            print("Filtering features")
+            X = select_features(X, y, n_jobs=N_JOBS)
+            self.selected_features = list(X)
+        else:
+            X = X[self.selected_features]
         print("Training Data Created")
         print("X: {}, y: {}".format(X.shape, y.shape))
         return X, y
