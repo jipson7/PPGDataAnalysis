@@ -77,6 +77,7 @@ def save_data(trial_id):
 
     try:
         db.session.commit()
+        print("Saved " + str(device))
         return "Ok"
     except SQLAlchemyError as e:
         print(e)
