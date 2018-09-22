@@ -5,8 +5,8 @@ import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import time
 import math
+from examine import print_stats
 
 
 def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
@@ -14,8 +14,6 @@ def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
 
     wrist_oxygen = devices[0][['oxygen']]
     true_oxygen = devices[1][['oxygen']]
-
-    print("Length of Dataframe: " + str(data.get_df_length(wrist_oxygen)))
 
     wrist_oxygen.columns = ['Wrist Oxygen']
     true_oxygen.columns = ['Fingertip Oxygen']
@@ -28,33 +26,9 @@ def visualize_algorithms(trial_id, algo_name='enhanced', threshold=1.0):
     graph_df.plot.line(color=['red', 'blue'])
     plt.xlabel("Time")
     plt.ylabel("SpO2 (%)")
-    plt.savefig('figs/algo{}.png'.format(time.time()))
     plt.show()
 
     print_stats(wrist_oxygen, true_oxygen, threshold)
-
-
-def print_stats(wrist_device, true_device, threshold):
-
-    wrist_oxygen = wrist_device.values.flatten()
-    true_oxygen = true_device.values.flatten()
-
-    sample_count = wrist_oxygen.shape[0]
-    wrist_reliable_count = np.count_nonzero(~np.isnan(wrist_oxygen))
-
-    print("Samples Collected: " + str(sample_count))
-
-    algo_percent = (wrist_reliable_count / sample_count) * 100
-    print("Algorithm marked {} samples, or {:.1f}%, as reliable".format(wrist_reliable_count, algo_percent))
-
-    true_reliable_count = 0
-    for o1, o2 in zip(wrist_oxygen, true_oxygen):
-        difference = np.abs(np.subtract(o1, o2))
-        if difference <= threshold:
-            true_reliable_count += 1
-
-    actual_precent = (true_reliable_count / sample_count) * 100
-    print("{}, or {:.1f}%, of labels were within {} of wrist sensor".format(true_reliable_count, actual_precent, threshold))
 
 
 def visualize_classifier(trial_id, algo_name, threshold):
@@ -87,7 +61,6 @@ def visualize_classifier(trial_id, algo_name, threshold):
     plt.xlabel("Time")
     plt.ylabel("SpO2 (%)")
     plt.ylim(ymin=56, ymax=105)
-    plt.savefig('figs/clf{}.png'.format(time.time()))
     plt.show()
 
     print_stats(wrist_oxygen_clean, true_oxygen, threshold)
