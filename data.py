@@ -2,6 +2,7 @@ import datetime
 import pandas as pd
 import pickle
 import os
+import pathlib
 from server import app
 from models import Trial
 import matplotlib.pyplot as plt
@@ -9,12 +10,14 @@ import numpy as np
 import itertools
 from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, EfficientFCParameters
+from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, EfficientFCParameters, MinimalFCParameters
 
 
 np.random.seed(42)
 N_JOBS = 20
 CACHE_ROOT = './local-cache/'
+
+pathlib.Path(CACHE_ROOT + 'xy').mkdir(parents=True, exist_ok=True)
 
 
 def list_trials():
@@ -94,6 +97,8 @@ def get_df_length(df):
 
 
 class DataLoader:
+
+    feature_type = 'minimal'
 
     def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features=None):
         self.window_size = window_size
@@ -204,21 +209,22 @@ class DataLoader:
 
         y = pd.Series(data=self._create_reliability_label(devices))
 
-        if self.features is None:
-            X = extract_features(X_windowed, column_id='id',
-                                 column_sort='time',
-                                 n_jobs=N_JOBS,
-                                 default_fc_parameters=EfficientFCParameters())
+        if self.feature_type == 'efficient':
+            features = EfficientFCParameters()
+        elif self.feature_type == 'comprehensive':
+            features = ComprehensiveFCParameters()
+        elif self.feature_type == 'minimal':
+            features = MinimalFCParameters()
         else:
-            X = extract_features(X_windowed, column_id='id',
-                                 column_sort='time',
-                                 n_jobs=N_JOBS,
-                                 kind_to_fc_parameters=self.features)
-
+            raise RuntimeError("Invalid feature type")
+        X = extract_features(X_windowed, column_id='id',
+                             column_sort='time',
+                             n_jobs=N_JOBS,
+                             default_fc_parameters=features)
         impute(X)
 
         print("{} features extracted for trial {}".format(X.shape[1], trial_id))
         return X, y
 
     def __str__(self):
-        return "type-{}-{}-{}".format(self.threshold, self.window_size, self.algo)
+        return "type-{}-{}-{}-{}".format(self.threshold, self.window_size, self.algo, self.feature_type)
