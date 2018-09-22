@@ -4,7 +4,8 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, precision_score
 import xgboost as xgb
 import warnings
-from data import N_JOBS
+import matplotlib.pyplot as plt
+from data import N_JOBS, CM_CACHE
 
 warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
 
@@ -34,7 +35,9 @@ def create_average_cm(clf, trial_ids, data_loader):
         cm = create_cm(clf, training_ids, trial_id, data_loader)
         cms.append(cm)
     avg_cm = np.average(cms, axis=0)
+    avg_cm = np.array(avg_cm).astype(int)
     data.plot_confusion_matrix(avg_cm)
+    plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '.png')
 
 
 def create_cm(clf, training_ids, test_id, data_loader):

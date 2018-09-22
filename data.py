@@ -16,8 +16,11 @@ from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, Effic
 np.random.seed(42)
 N_JOBS = 20
 CACHE_ROOT = './local-cache/'
+XY_CACHE = CACHE_ROOT + 'xy/'
+CM_CACHE = CACHE_ROOT + 'cms/'
 
-pathlib.Path(CACHE_ROOT + 'xy').mkdir(parents=True, exist_ok=True)
+pathlib.Path(XY_CACHE).mkdir(parents=True, exist_ok=True)
+pathlib.Path(CM_CACHE).mkdir(parents=True, exist_ok=True)
 
 
 def list_trials():
@@ -90,7 +93,6 @@ def plot_confusion_matrix(cm,
     plt.tight_layout()
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
-    plt.show()
 
 
 def get_df_length(df):
@@ -112,7 +114,7 @@ class DataLoader:
         X_s = []
         y_s = []
         for trial_id in trial_ids:
-            pickle_path = CACHE_ROOT + 'xy/trial' + str(trial_id) + str(self) + '.pickle'
+            pickle_path = XY_CACHE + 'trial' + str(trial_id) + str(self) + '.pickle'
             if os.path.isfile(pickle_path):
                 Xy = pickle.load(open(pickle_path, "rb"))
                 X = Xy[0]
