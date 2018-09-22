@@ -9,11 +9,11 @@ import numpy as np
 import itertools
 from tsfresh import extract_features, select_features
 from tsfresh.utilities.dataframe_functions import impute
-from tsfresh.feature_extraction.settings import ComprehensiveFCParameters
+from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, EfficientFCParameters
 
 
 np.random.seed(42)
-N_JOBS = 16
+N_JOBS = 20
 CACHE_ROOT = './local-cache/'
 
 
@@ -102,15 +102,18 @@ class DataLoader:
         self.features = features
 
     def load(self, trial_ids):
-        pickle_path = CACHE_ROOT + 'xy/' + ','.join([str(x) for x in sorted(trial_ids)]) + str(self) + '.pickle'
-        if os.path.isfile(pickle_path):
-            Xy = pickle.load(open(pickle_path, "rb"))
-            return Xy[0], Xy[1]
         X_s = []
         y_s = []
         for trial_id in trial_ids:
-            X, y = self._extract_features(trial_id)
-            X.sort_index(axis=1, inplace=True)
+            pickle_path = CACHE_ROOT + 'xy/trial' + str(trial_id) + str(self) + '.pickle'
+            if os.path.isfile(pickle_path):
+                Xy = pickle.load(open(pickle_path, "rb"))
+                X = Xy[0]
+                y = Xy[1]
+            else:
+                X, y = self._extract_features(trial_id)
+                X.sort_index(axis=1, inplace=True)
+                pickle.dump([X, y], open(pickle_path, "wb"))
             X_s.append(X)
             y_s.append(y)
         X = pd.concat(X_s, sort=True)
@@ -119,7 +122,6 @@ class DataLoader:
         X = select_features(X, y, n_jobs=N_JOBS)
         print("Training Data Created")
         print("X: {}, y: {}".format(X.shape, y.shape))
-        pickle.dump([X, y], open(pickle_path, "wb"))
         return X, y
 
     def _load_devices(self, trial_id):
@@ -206,7 +208,7 @@ class DataLoader:
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  n_jobs=N_JOBS,
-                                 default_fc_parameters=ComprehensiveFCParameters())
+                                 default_fc_parameters=EfficientFCParameters())
         else:
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
