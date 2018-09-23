@@ -18,6 +18,7 @@ N_JOBS = 20
 CACHE_ROOT = './local-cache/'
 XY_CACHE = CACHE_ROOT + 'xy/'
 CM_CACHE = CACHE_ROOT + 'cms/'
+DATA_CACHE = CACHE_ROOT + 'data/'
 
 pathlib.Path(XY_CACHE).mkdir(parents=True, exist_ok=True)
 pathlib.Path(CM_CACHE).mkdir(parents=True, exist_ok=True)
@@ -101,13 +102,11 @@ def get_df_length(df):
 
 class DataLoader:
 
-    feature_type = 'minimal'
-
-    def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features=None):
+    def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive'):
         self.window_size = window_size
         self.threshold = threshold
         self.algo = algo_name
-        self.features = features
+        self.feature_type = features
         self.selected_features = None
 
     def load(self, trial_ids):
@@ -137,7 +136,10 @@ class DataLoader:
         print("X: {}, y: {}".format(X.shape, y.shape))
         return X, y
 
-    def _load_devices(self, trial_id):
+    def load_devices(self, trial_id):
+        pickle_path = DATA_CACHE + "{}-{}.pickle".format(trial_id, self.algo)
+        if os.path.isfile(pickle_path):
+            return pickle.load(open(pickle_path, "rb"))
         print("\nLoading trial {} with {} algorithm".format(trial_id, self.algo))
         with app.app_context():
             trial = Trial.query.get(trial_id)
@@ -145,6 +147,7 @@ class DataLoader:
                            trial.df_reflective(algo_name=self.algo),
                            trial.df_transitive()]
             device_list = normalize_timestamps(device_list)
+            pickle.dump(device_list, open(pickle_path, "wb"))
             print("Trial load finished.")
             return device_list
 
@@ -208,7 +211,7 @@ class DataLoader:
         return pd.DataFrame(X_windowed, columns=column_names)
 
     def _extract_features(self, trial_id):
-        devices = self._load_devices(trial_id)
+        devices = self.load_devices(trial_id)
         wrist_device = devices[0]
         input_columns = ['red', 'ir', 'gyro', 'accel']
         X_raw = wrist_device[input_columns]
