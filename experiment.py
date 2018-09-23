@@ -18,22 +18,22 @@ warnings.filterwarnings(module='sklearn*', action='ignore', category=Deprecation
 def optimize_classifier(trial_ids, data_loader):
     X, y = data_loader.load(trial_ids)
     parameters = {
-        'learning_rate': [0.1, 0.5, 0.6],
-        'n_estimators': [50, 100, 150],
-        'max_depth': [3, 6]
+        'learning_rate': [0.1, 0.3, 0.5],
+        'n_estimators': [100, 1000],
+        # 'max_depth': [3, 6, 9]
     }
-    scoring = 'precision'
+    scoring = 'precision_weighted'
 
     cv = StratifiedKFold(n_splits=3, shuffle=False)
 
-    clf = GridSearchCV(GradientBoostingClassifier(), param_grid=parameters, scoring=['accuracy', scoring],
-                       cv=cv, verbose=2, refit=scoring, n_jobs=N_JOBS,
+    clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=scoring,
+                       cv=cv, verbose=3, refit=False, n_jobs=N_JOBS,
                        return_train_score=False, iid=False)
     clf.fit(X, y)
     results = clf.cv_results_
     print("XGB Optimal Model Developed")
-    for param, accuracy, score in zip(results['params'], results['mean_test_accuracy'], results['mean_test_' + scoring]):
-        print("Accuracy: {:.3f}, {}: {:.3f}, Params: {}".format(accuracy, scoring, score, param))
+    for param, score in zip(results['params'], results['mean_test_' + scoring]):
+        print("{}: {:.3f}, Params: {}".format(scoring, score, param))
     print("\nBest {} {}, Params: {}".format(scoring, clf.best_score_, clf.best_params_))
 
 
@@ -44,7 +44,7 @@ def rmse(d1, d2):
 
 
 def run_experiments(clf, trial_ids, data_loader):
-    log_name = EXPERIMENT_CACHE + "{}-{}.txt".format(time.time(), data_loader)
+    log_name = EXPERIMENT_CACHE + "log-{}.txt".format(data_loader)
     log = open(log_name, 'w')
     cms = []
     precisions = []
@@ -88,14 +88,15 @@ def run_experiments(clf, trial_ids, data_loader):
 
     log.close()
 
+
 if __name__ == '__main__':
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
 
     clf = xgb.XGBClassifier(n_jobs=N_JOBS)
-    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='minimal')
-
+    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
     run_experiments(clf, trial_ids, dl)
 
+    # dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
     # optimize_classifier(trial_ids, dl)
 
 
