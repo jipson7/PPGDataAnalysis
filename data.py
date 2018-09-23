@@ -19,9 +19,13 @@ CACHE_ROOT = './local-cache/'
 XY_CACHE = CACHE_ROOT + 'xy/'
 CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
+EXPERIMENT_CACHE = CACHE_ROOT + 'experiments/'
 
-pathlib.Path(XY_CACHE).mkdir(parents=True, exist_ok=True)
-pathlib.Path(CM_CACHE).mkdir(parents=True, exist_ok=True)
+
+caches = [XY_CACHE, CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE]
+
+for cache in caches:
+    pathlib.Path(cache).mkdir(parents=True, exist_ok=True)
 
 
 def list_trials():
@@ -127,16 +131,30 @@ class DataLoader:
         X = pd.concat(X_s, sort=True)
         y = pd.concat(y_s)
         if self.selected_features is None:
-            print("Filtering features")
             X = select_features(X, y, n_jobs=N_JOBS)
             self.selected_features = list(X)
         else:
             X = X[self.selected_features]
-        print("Training Data Created")
-        print("X: {}, y: {}".format(X.shape, y.shape))
         return X, y
 
-    def load_devices(self, trial_id):
+    def load_oxygen(self, trial_id, y_pred):
+        devices = self._load_devices(trial_id)
+
+        # Remove first 99 elements to align with label
+        wrist_oxygen = devices[0][['oxygen']][99:]
+        fingertip_oxygen = devices[1][['oxygen']][99:]
+
+        # Filter classified values
+        pruned_oxygen = wrist_oxygen.where(y_pred.reshape(wrist_oxygen.shape))
+
+        # Rename Columns
+        wrist_oxygen.columns = ['Wrist Oxygen']
+        fingertip_oxygen.columns = ['Fingertip Oxygen']
+        pruned_oxygen.columns = ['Wrist Oxygen Reliable']
+
+        return wrist_oxygen, pruned_oxygen, fingertip_oxygen
+
+    def _load_devices(self, trial_id):
         pickle_path = DATA_CACHE + "{}-{}.pickle".format(trial_id, self.algo)
         if os.path.isfile(pickle_path):
             return pickle.load(open(pickle_path, "rb"))
@@ -211,7 +229,7 @@ class DataLoader:
         return pd.DataFrame(X_windowed, columns=column_names)
 
     def _extract_features(self, trial_id):
-        devices = self.load_devices(trial_id)
+        devices = self._load_devices(trial_id)
         wrist_device = devices[0]
         input_columns = ['red', 'ir', 'gyro', 'accel']
         X_raw = wrist_device[input_columns]
