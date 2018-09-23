@@ -16,13 +16,13 @@ from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, Effic
 np.random.seed(42)
 N_JOBS = 20
 CACHE_ROOT = './local-cache/'
-XY_CACHE = CACHE_ROOT + 'xy/'
 CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
 EXPERIMENT_CACHE = CACHE_ROOT + 'experiments/'
+FEATURE_CACHE = CACHE_ROOT + 'features/'
 
 
-caches = [XY_CACHE, CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE]
+caches = [CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE, FEATURE_CACHE]
 
 for cache in caches:
     pathlib.Path(cache).mkdir(parents=True, exist_ok=True)
@@ -117,15 +117,10 @@ class DataLoader:
         X_s = []
         y_s = []
         for trial_id in trial_ids:
-            pickle_path = XY_CACHE + 'trial' + str(trial_id) + str(self) + '.pickle'
-            if os.path.isfile(pickle_path):
-                Xy = pickle.load(open(pickle_path, "rb"))
-                X = Xy[0]
-                y = Xy[1]
-            else:
-                X, y = self._extract_features(trial_id)
-                X.sort_index(axis=1, inplace=True)
-                pickle.dump([X, y], open(pickle_path, "wb"))
+            devices = self._load_devices(trial_id)
+            X = self._extract_features(devices, trial_id)
+            y = pd.Series(data=self._create_reliability_label(devices))
+            X.sort_index(axis=1, inplace=True)
             X_s.append(X)
             y_s.append(y)
         X = pd.concat(X_s, sort=True)
@@ -228,32 +223,35 @@ class DataLoader:
 
         return pd.DataFrame(X_windowed, columns=column_names)
 
-    def _extract_features(self, trial_id):
-        devices = self._load_devices(trial_id)
-        wrist_device = devices[0]
-        input_columns = ['red', 'ir', 'gyro', 'accel']
-        X_raw = wrist_device[input_columns]
+    def _extract_features(self, devices, trial_id):
 
-        X_windowed = self._windowize_tsfresh(X_raw)
+        pickle_path = FEATURE_CACHE + 'X{}-{}-{}-{}.pickle'.format(trial_id, self.window_size, self.algo, self.feature_type)
 
-        y = pd.Series(data=self._create_reliability_label(devices))
-
-        if self.feature_type == 'efficient':
-            features = EfficientFCParameters()
-        elif self.feature_type == 'comprehensive':
-            features = ComprehensiveFCParameters()
-        elif self.feature_type == 'minimal':
-            features = MinimalFCParameters()
+        if os.path.isfile(pickle_path):
+            return pickle.load(open(pickle_path, "rb"))
         else:
-            raise RuntimeError("Invalid feature type")
-        X = extract_features(X_windowed, column_id='id',
-                             column_sort='time',
-                             n_jobs=N_JOBS,
-                             default_fc_parameters=features)
-        impute(X)
 
-        print("{} features extracted for trial {}".format(X.shape[1], trial_id))
-        return X, y
+            wrist_device = devices[0]
+            input_columns = ['red', 'ir', 'gyro', 'accel']
+            X_raw = wrist_device[input_columns]
+
+            X_windowed = self._windowize_tsfresh(X_raw)
+
+            if self.feature_type == 'efficient':
+                features = EfficientFCParameters()
+            elif self.feature_type == 'comprehensive':
+                features = ComprehensiveFCParameters()
+            elif self.feature_type == 'minimal':
+                features = MinimalFCParameters()
+            else:
+                raise RuntimeError("Invalid feature type")
+            X = extract_features(X_windowed, column_id='id',
+                                 column_sort='time',
+                                 n_jobs=N_JOBS,
+                                 default_fc_parameters=features)
+            impute(X)
+            pickle.dump(X, open(pickle_path, "wb"))
+            return X
 
     def __str__(self):
         return "type-{}-{}-{}-{}".format(self.threshold, self.window_size, self.algo, self.feature_type)
