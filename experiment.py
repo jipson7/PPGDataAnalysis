@@ -1,12 +1,12 @@
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
-import numpy as np
 import math
-import time
-from sklearn.metrics import confusion_matrix, precision_score
-import xgboost as xgb
-from sklearn.ensemble import GradientBoostingClassifier
 import warnings
+
 import matplotlib
+import numpy as np
+import xgboost as xgb
+from sklearn.metrics import confusion_matrix, precision_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import data
@@ -89,14 +89,13 @@ def run_experiments(clf, trial_ids, data_loader):
     log.close()
 
 
-if __name__ == '__main__':
+def run():
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
-
-    clf = xgb.XGBClassifier(n_jobs=N_JOBS)
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS)  # Tune in tune.py
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
     run_experiments(clf, trial_ids, dl)
 
-    # dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
-    # optimize_classifier(trial_ids, dl)
 
+if __name__ == '__main__':
+    run()
 
