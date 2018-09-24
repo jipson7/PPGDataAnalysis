@@ -1,5 +1,5 @@
 import math
-
+import warnings
 import matplotlib
 import numpy as np
 import xgboost as xgb
@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import data
 from data import N_JOBS, CM_CACHE, EXPERIMENT_CACHE
 
+warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
 
 
 def rmse(d1, d2):
@@ -38,11 +39,17 @@ def run_experiments(clf, trial_ids, data_loader):
         y_pred = clf.predict(X_test)
 
         # Get Precision Scores
-        precisions.append(precision_score(y_test, y_pred))
-        precisions_weighted.append(precision_score(y_test, y_pred, average='weighted'))
+        precision = precision_score(y_test, y_pred)
+        log.write("Precision {}\n".format(precision))
+        precisions.append(precision)
+        precision_weighted = precision_score(y_test, y_pred, average='weighted')
+        log.write("Precision Weighted{}\n".format(precision_weighted))
+        precisions_weighted.append(precision_weighted)
 
         # Create confusion matrix
-        cms.append(confusion_matrix(y_test, y_pred))
+        cm = confusion_matrix(y_test, y_pred)
+        log.write("CM {}\n".format(cm))
+        cms.append(str(cm) + '\n')
 
         # Get Before and after oxygen values
         wrist_oxygen, pruned_oxygen, fingertip_oxygen = data_loader.load_oxygen(trial_id, y_pred)
@@ -67,7 +74,7 @@ def run_experiments(clf, trial_ids, data_loader):
 def run():
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
     clf = xgb.XGBClassifier(n_jobs=N_JOBS, learning_rate=0.01, max_depth=3, n_estimators=50)  # Tune in tune.py
-    dl = data.DataLoader(window_size=100, threshold=3.0, algo_name='maxim', features='comprehensive')
+    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
     run_experiments(clf, trial_ids, dl)
 
 

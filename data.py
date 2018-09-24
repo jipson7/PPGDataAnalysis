@@ -117,7 +117,6 @@ class DataLoader:
         X_s = []
         y_s = []
         for trial_id in trial_ids:
-            print("Loading trial " + str(trial_id))
             devices = self._load_devices(trial_id)
             X = self._extract_features(devices, trial_id)
             y = pd.Series(data=self._create_reliability_label(devices))
