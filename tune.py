@@ -7,8 +7,8 @@ from data import N_JOBS
 def optimize_classifier(trial_ids, data_loader):
     X, y = data_loader.load(trial_ids)
     parameters = {
-        'learning_rate': [0.1, 0.3, 0.5],
-        'n_estimators': [100, 1000],
+        'learning_rate': [0.01],
+        'n_estimators': [50, 100],
         'max_depth': [3, 6, 9]
     }
     scoring = 'precision_weighted'

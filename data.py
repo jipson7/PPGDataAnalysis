@@ -207,7 +207,6 @@ class DataLoader:
             else:
                 y.append(True)
         y = np.array(y)
-        print_label_counts(y)
         return y
 
     def _windowize_tsfresh(self, X_raw):

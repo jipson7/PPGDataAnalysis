@@ -1,40 +1,15 @@
 import math
-import warnings
 
 import matplotlib
 import numpy as np
 import xgboost as xgb
 from sklearn.metrics import confusion_matrix, precision_score
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import data
 from data import N_JOBS, CM_CACHE, EXPERIMENT_CACHE
 
-warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
-
-
-def optimize_classifier(trial_ids, data_loader):
-    X, y = data_loader.load(trial_ids)
-    parameters = {
-        'learning_rate': [0.1, 0.3, 0.5],
-        'n_estimators': [100, 1000],
-        # 'max_depth': [3, 6, 9]
-    }
-    scoring = 'precision_weighted'
-
-    cv = StratifiedKFold(n_splits=3, shuffle=False)
-
-    clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=scoring,
-                       cv=cv, verbose=3, refit=False, n_jobs=N_JOBS,
-                       return_train_score=False, iid=False)
-    clf.fit(X, y)
-    results = clf.cv_results_
-    print("XGB Optimal Model Developed")
-    for param, score in zip(results['params'], results['mean_test_' + scoring]):
-        print("{}: {:.3f}, Params: {}".format(scoring, score, param))
-    print("\nBest {} {}, Params: {}".format(scoring, clf.best_score_, clf.best_params_))
 
 
 def rmse(d1, d2):
@@ -83,16 +58,16 @@ def run_experiments(clf, trial_ids, data_loader):
     data.plot_confusion_matrix(avg_cm)
     plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '.png')
 
-    log.write("Average Precision: {}".format(np.average(precisions)))
-    log.write("Average Weighted Precision: {}".format(np.average(precisions_weighted)))
+    log.write("Average Precision: {}\n".format(np.average(precisions)))
+    log.write("Average Weighted Precision: {}\n".format(np.average(precisions_weighted)))
 
     log.close()
 
 
 def run():
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
-    clf = xgb.XGBClassifier(n_jobs=N_JOBS)  # Tune in tune.py
-    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS, learning_rate=0.01, max_depth=3, n_estimators=50)  # Tune in tune.py
+    dl = data.DataLoader(window_size=100, threshold=3.0, algo_name='maxim', features='comprehensive')
     run_experiments(clf, trial_ids, dl)
 
 
