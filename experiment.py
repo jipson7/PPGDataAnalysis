@@ -26,11 +26,12 @@ def run_experiments(clf, trial_ids, data_loader):
     precisions = []
     precisions_weighted = []
     for trial_id in trial_ids:
-        start_msg = "Running experiments on trial " + str(trial_id) + '\n'
+        start_msg = "\nRunning experiments on trial " + str(trial_id) + '\n'
         log.write(start_msg)
         print(start_msg)
 
         # Prep leave 1 out data
+        print("Fitting classifier")
         training_ids = trial_ids.copy()
         training_ids.remove(trial_id)
         X_train, y_train = data_loader.load(training_ids)
@@ -38,6 +39,7 @@ def run_experiments(clf, trial_ids, data_loader):
         X_test, y_test = data_loader.load([trial_id])
         y_pred = clf.predict(X_test)
 
+        print("Calculating Results")
         # Get Precision Scores
         precision = precision_score(y_test, y_pred)
         log.write("Precision {}\n".format(precision))
@@ -49,7 +51,7 @@ def run_experiments(clf, trial_ids, data_loader):
         # Create confusion matrix
         cm = confusion_matrix(y_test, y_pred)
         log.write("CM {}\n".format(cm))
-        cms.append(str(cm) + '\n')
+        cms.append(cm)
 
         # Get Before and after oxygen values
         wrist_oxygen, pruned_oxygen, fingertip_oxygen = data_loader.load_oxygen(trial_id, y_pred)
@@ -73,7 +75,7 @@ def run_experiments(clf, trial_ids, data_loader):
 
 def run():
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
-    clf = xgb.XGBClassifier(n_jobs=N_JOBS, learning_rate=0.01, max_depth=3, n_estimators=50)  # Tune in tune.py
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS)  # Tune in tune.py
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
     run_experiments(clf, trial_ids, dl)
 
