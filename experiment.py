@@ -75,7 +75,7 @@ def run_experiments(clf, trial_ids, data_loader):
 
 def run():
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
-    clf = xgb.XGBClassifier(n_jobs=N_JOBS)  # Tune in tune.py
+    clf = xgb.XGBClassifier(n_jobs=N_JOBS, learning_rate=0.1, max_depth=3, n_estimators=200)  # Tune in tune.py
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
     run_experiments(clf, trial_ids, dl)
 

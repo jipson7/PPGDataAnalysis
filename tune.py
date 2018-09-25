@@ -25,6 +25,7 @@ def optimize_classifier(training_ids, validation_ids, data_loader):
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
+    # TODO check if I need IID = False?
     clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=scoring,
                        cv=cv, verbose=1, refit=False, n_jobs=N_JOBS, iid=False)
 
