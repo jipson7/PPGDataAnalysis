@@ -106,7 +106,8 @@ def get_df_length(df):
 
 class DataLoader:
 
-    def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive'):
+    # TODO implement feature rate limiting
+    def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive', feature_limit=None):
         self.window_size = window_size
         self.threshold = threshold
         self.algo = algo_name
