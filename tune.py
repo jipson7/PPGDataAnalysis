@@ -1,5 +1,5 @@
 import xgboost as xgb
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 import data
 from data import N_JOBS
 
@@ -23,8 +23,10 @@ def optimize_classifier(training_ids, validation_ids, data_loader):
 
     scoring = 'precision_weighted'
 
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
     clf = GridSearchCV(xgb.XGBClassifier(), param_grid=parameters, scoring=scoring,
-                       cv=5, verbose=1, refit=False, n_jobs=N_JOBS, iid=False)
+                       cv=cv, verbose=1, refit=False, n_jobs=N_JOBS, iid=False)
 
     clf.fit(X_train, y_train, **fit_params)
 
