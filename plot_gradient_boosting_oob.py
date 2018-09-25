@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -98,4 +100,4 @@ plt.legend(loc='upper right')
 plt.ylabel('normalized loss')
 plt.xlabel('number of iterations')
 
-plt.show()
+plt.savefig("./local-cache/experiments/oob.png")
