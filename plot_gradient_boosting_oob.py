@@ -4,30 +4,33 @@ matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import ensemble
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
 
 import data
-from data import N_JOBS
 
 
 print("Loading")
 data_loader = data.DataLoader()
 
 X, y = data_loader.load([22])
+X = X.values
+y = y.values
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
 print("Fitting")
 
-# TODO Add N_JOBS param
-# Fit classifier with out-of-bag estimates
 params = {
-    'n_estimators': 1200, 'max_depth': 3, 'subsample': 0.5,
-    'learning_rate': 0.01, 'min_samples_leaf': 1, 'random_state': 3
+    'learning_rate': 0.1,
+    'n_estimators': 500,
+    'max_depth': 3,
+    'subsample': 0.5,
+    'min_samples_leaf': 1
 }
-clf = ensemble.GradientBoostingClassifier(**params)
+
+clf = GradientBoostingClassifier(**params)
 
 clf.fit(X_train, y_train)
 acc = clf.score(X_test, y_test)
@@ -47,7 +50,7 @@ def heldout_score(clf, X_test, y_test):
 
 def cv_estimate(n_splits=3):
     cv = KFold(n_splits=n_splits)
-    cv_clf = ensemble.GradientBoostingClassifier(**params)
+    cv_clf = GradientBoostingClassifier(**params)
     val_scores = np.zeros((n_estimators,), dtype=np.float64)
     for train, test in cv.split(X_train, y_train):
         cv_clf.fit(X_train[train], y_train[train])
