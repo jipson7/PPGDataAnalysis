@@ -9,20 +9,24 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 
 import data
+from data import N_JOBS
 
 
-# Generate data (adapted from G. Ridgeway's gbm example)
-
+print("Loading")
 data_loader = data.DataLoader()
 
-X, y = data_loader.load(data.list_trials())
+X, y = data_loader.load([22])
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
-                                                    random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
 
+print("Fitting")
+
+# TODO Add N_JOBS param
 # Fit classifier with out-of-bag estimates
-params = {'n_estimators': 1200, 'max_depth': 3, 'subsample': 0.5,
-          'learning_rate': 0.01, 'min_samples_leaf': 1, 'random_state': 3}
+params = {
+    'n_estimators': 1200, 'max_depth': 3, 'subsample': 0.5,
+    'learning_rate': 0.01, 'min_samples_leaf': 1, 'random_state': 3
+}
 clf = ensemble.GradientBoostingClassifier(**params)
 
 clf.fit(X_train, y_train)
@@ -52,6 +56,8 @@ def cv_estimate(n_splits=3):
     return val_scores
 
 
+print("Scoring")
+
 # Estimate best n_estimator using cross-validation
 cv_score = cv_estimate(3)
 
@@ -76,6 +82,8 @@ cv_best_iter = x[np.argmin(cv_score)]
 oob_color = list(map(lambda x: x / 256.0, (190, 174, 212)))
 test_color = list(map(lambda x: x / 256.0, (127, 201, 127)))
 cv_color = list(map(lambda x: x / 256.0, (253, 192, 134)))
+
+print("Plotting")
 
 # plot curves and vertical lines for best iterations
 plt.plot(x, cumsum, label='OOB loss', color=oob_color)
