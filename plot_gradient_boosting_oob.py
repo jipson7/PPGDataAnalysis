@@ -14,7 +14,7 @@ from params import gbc as params
 print("Loading")
 data_loader = data.DataLoader()
 
-X, y = data_loader.load([22])
+X, y = data_loader.load([22, 23, 24, 29, 31, 32, 33, 36, 40, 43])
 X = X.values
 y = y.values
 
