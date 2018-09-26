@@ -8,10 +8,10 @@ from models import Trial
 import matplotlib.pyplot as plt
 import numpy as np
 import itertools
-from tsfresh import extract_features, select_features
+from tsfresh import extract_features
 from tsfresh.utilities.dataframe_functions import impute
 from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, EfficientFCParameters, MinimalFCParameters
-
+from tsfresh.feature_selection.relevance import calculate_relevance_table
 
 np.random.seed(42)
 N_JOBS = 20
@@ -106,13 +106,13 @@ def get_df_length(df):
 
 class DataLoader:
 
-    # TODO implement feature rate limiting
     def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive', feature_limit=None):
         self.window_size = window_size
         self.threshold = threshold
         self.algo = algo_name
         self.feature_type = features
         self.selected_features = None
+        self.feature_limit = feature_limit
 
     def load(self, trial_ids):
         X_s = []
@@ -127,10 +127,18 @@ class DataLoader:
         X = pd.concat(X_s, sort=True)
         y = pd.concat(y_s)
         if self.selected_features is None:
-            X = select_features(X, y, n_jobs=N_JOBS)
-            self.selected_features = list(X)
+            rel_table = calculate_relevance_table(X, y, n_jobs=N_JOBS)
+            rel_table = rel_table.loc[rel_table['relevant'] == True]
+            sorted_features = rel_table.sort_values(by='p_value')
+            feature_names = sorted_features.index.tolist()
+            if self.feature_limit is not None:
+                feature_names = feature_names[:self.feature_limit]
+            assert len(feature_names) == self.feature_limit
+            X = X[feature_names]
+            self.selected_features = feature_names
         else:
             X = X[self.selected_features]
+        print("Data loaded for trials: " + ', '.join([str(x) for x in trial_ids]))
         return X, y
 
     def load_oxygen(self, trial_id, y_pred):
