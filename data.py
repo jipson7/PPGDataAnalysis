@@ -114,7 +114,7 @@ class DataLoader:
         self.selected_features = None
         self.feature_limit = feature_limit
 
-    def load(self, trial_ids):
+    def load(self, trial_ids, allow_overlap=False):
         X_s = []
         y_s = []
         for trial_id in trial_ids:
@@ -133,12 +133,15 @@ class DataLoader:
             feature_names = sorted_features.index.tolist()
             if self.feature_limit is not None:
                 feature_names = feature_names[:self.feature_limit]
-            assert len(feature_names) == self.feature_limit
+                assert len(feature_names) == self.feature_limit
             X = X[feature_names]
             self.selected_features = feature_names
         else:
             X = X[self.selected_features]
         print("Data loaded for trials: " + ', '.join([str(x) for x in trial_ids]))
+        if not allow_overlap:
+            X = X.iloc[::100, :]
+            y = y.iloc[::100, :]
         return X, y
 
     def load_oxygen(self, trial_id, y_pred):
