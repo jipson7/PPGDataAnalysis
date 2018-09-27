@@ -10,7 +10,7 @@ xgboost = {
 
 gbc = {
     'learning_rate': 0.1,
-    'n_estimators': 1200,
+    'n_estimators': 100,
     'max_depth': 3,
     'subsample': 0.5,
     'min_samples_leaf': 1
