@@ -152,6 +152,7 @@ class DataLoader:
             X = X[self.selected_features]
         print("Data loaded for trials: " + ', '.join([str(x) for x in trial_ids]))
         print("X shape: {}, y shape: {}".format(X.shape, y.shape))
+        print_label_counts(y)
         return X, y
 
     def load_oxygen(self, trial_id, y_pred):
