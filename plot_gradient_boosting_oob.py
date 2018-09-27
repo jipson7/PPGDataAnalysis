@@ -14,11 +14,11 @@ from params import gbc as params
 print("Loading")
 data_loader = data.DataLoader()
 
-X, y = data_loader.load([22, 23, 24, 29, 31, 32, 33, 36, 40, 43])
+X, y = data_loader.load(data.list_trials())
 X = X.values
 y = y.values
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_state=42)
 
 print("Fitting")
 

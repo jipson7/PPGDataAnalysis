@@ -63,6 +63,6 @@ def tune_1(X, y):
 
 
 if __name__ =='__main__':
-    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive', feature_limit=500)
-    X, y = dl.load([22, 23, 24, 29, 31, 32, 33, 36, 40, 43])
+    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
+    X, y = dl.load([22, 23])
     tune_1(X, y)

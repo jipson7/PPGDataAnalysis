@@ -106,15 +106,20 @@ def get_df_length(df):
 
 class DataLoader:
 
-    def __init__(self, window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive', feature_limit=None):
+    def __init__(self, window_size=100,
+                 threshold=1.0, algo_name='maxim',
+                 features='comprehensive', feature_limit=None,
+                 allow_overlap=False):
         self.window_size = window_size
         self.threshold = threshold
         self.algo = algo_name
         self.feature_type = features
         self.selected_features = None
         self.feature_limit = feature_limit
+        self.allow_overlap = allow_overlap
+        self.trial_labels_idx = {}
 
-    def load(self, trial_ids, allow_overlap=False):
+    def load(self, trial_ids):
         X_s = []
         y_s = []
         for trial_id in trial_ids:
@@ -122,6 +127,13 @@ class DataLoader:
             X = self._extract_features(devices, trial_id)
             y = pd.Series(data=self._create_reliability_label(devices))
             X.sort_index(axis=1, inplace=True)
+            if not self.allow_overlap:
+                idx_iid = y.iloc[::self.window_size].index.values
+                idx_pos = y[y == True].index.values
+                idx_union = np.sort(np.unique(np.concatenate((idx_iid, idx_pos), axis=None)))
+                X = X.loc[idx_union]
+                y = y.loc[idx_union]
+                self.trial_labels_idx[trial_id] = idx_union
             X_s.append(X)
             y_s.append(y)
         X = pd.concat(X_s, sort=True)
@@ -139,17 +151,19 @@ class DataLoader:
         else:
             X = X[self.selected_features]
         print("Data loaded for trials: " + ', '.join([str(x) for x in trial_ids]))
-        if not allow_overlap:
-            X = X.iloc[::100, :]
-            y = y.iloc[::100, :]
+        print("X shape: {}, y shape: {}".format(X.shape, y.shape))
         return X, y
 
     def load_oxygen(self, trial_id, y_pred):
         devices = self._load_devices(trial_id)
 
         # Remove first 99 elements to align with label
-        wrist_oxygen = devices[0][['oxygen']][99:]
-        fingertip_oxygen = devices[1][['oxygen']][99:]
+        wrist_oxygen = devices[0][['oxygen']][self.window_size - 1:]
+        fingertip_oxygen = devices[1][['oxygen']][self.window_size - 1:]
+
+        if not self.allow_overlap:
+            wrist_oxygen = wrist_oxygen.loc[self.trial_labels_idx[trial_id]]
+            fingertip_oxygen = fingertip_oxygen.loc[self.trial_labels_idx[trial_id]]
 
         # Filter classified values
         pruned_oxygen = wrist_oxygen.where(y_pred.reshape(wrist_oxygen.shape))
