@@ -10,8 +10,6 @@ import matplotlib.pyplot as plt
 import data
 from data import N_JOBS, CM_CACHE, EXPERIMENT_CACHE
 
-warnings.filterwarnings(module='sklearn*', action='ignore', category=DeprecationWarning)
-
 
 def rmse(d1, d2):
     d1 = d1.values.flatten()

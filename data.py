@@ -1,6 +1,7 @@
 import datetime
 import pandas as pd
 import pickle
+import warnings
 import os
 import pathlib
 from server import app
@@ -20,6 +21,8 @@ CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
 EXPERIMENT_CACHE = CACHE_ROOT + 'experiments/'
 FEATURE_CACHE = CACHE_ROOT + 'features/'
+
+warnings.filterwarnings('ignore')
 
 
 caches = [CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE, FEATURE_CACHE]

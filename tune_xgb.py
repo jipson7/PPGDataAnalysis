@@ -14,7 +14,7 @@ import matplotlib.pylab as plt
 from matplotlib.pylab import rcParams
 rcParams['figure.figsize'] = 12, 4
 
-CV_FOLDS = 8
+CV_FOLDS = 4
 
 
 def init_model_fit(alg, X_train, y_train,
@@ -68,7 +68,7 @@ def tune(X_train, y_train, X_test, y_test):
         subsample=0.8,
         colsample_bytree=0.8,
         objective='binary:logistic',
-        nthread=4,
+        nthread=data.N_JOBS,
         scale_pos_weight=1,
         seed=27)
 
@@ -85,7 +85,7 @@ def tune(X_train, y_train, X_test, y_test):
     }
 
     gsearch1 = GridSearchCV(estimator=model, param_grid=param_test1,
-                            scoring='precision_weighted', n_jobs=data.N_JOBS, iid=False,
+                            scoring='precision_weighted', iid=False,
                             cv=CV_FOLDS, verbose=1)
     gsearch1.fit(X_train, y_train)
 
@@ -93,6 +93,7 @@ def tune(X_train, y_train, X_test, y_test):
 
     print("Stage 2 Performance")
     print_model_performance(model, X_train, y_train, X_test, y_test)
+    print("Best Params: {}".format(gsearch1.best_params_))
 
 
 if __name__ =='__main__':
