@@ -129,11 +129,9 @@ class DataLoader:
             X.sort_index(axis=1, inplace=True)
             if not self.allow_overlap:
                 idx_iid = y.iloc[::self.window_size].index.values
-                idx_pos = y[y == True].index.values
-                idx_union = np.sort(np.unique(np.concatenate((idx_iid, idx_pos), axis=None)))
-                X = X.loc[idx_union]
-                y = y.loc[idx_union]
-                self.trial_labels_idx[trial_id] = idx_union
+                X = X.loc[idx_iid]
+                y = y.loc[idx_iid]
+                self.trial_labels_idx[trial_id] = idx_iid
             X_s.append(X)
             y_s.append(y)
         X = pd.concat(X_s, sort=True)
