@@ -14,13 +14,16 @@ import matplotlib.pylab as plt
 from matplotlib.pylab import rcParams
 rcParams['figure.figsize'] = 12, 4
 
+CV_FOLDS = 8
 
-def init_model_fit(alg, X_train, y_train, cv_folds=5,
+
+def init_model_fit(alg, X_train, y_train,
              early_stopping_rounds=50, metric='map'):
     xgb_param = alg.get_xgb_params()
     xgtrain = xgb.DMatrix(X_train, label=y_train)
-    cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=cv_folds,
-                      metrics=metric, early_stopping_rounds=early_stopping_rounds, shuffle=True, stratified=True, seed=42)
+    cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round=alg.get_params()['n_estimators'], nfold=CV_FOLDS,
+                      metrics=metric, early_stopping_rounds=early_stopping_rounds, shuffle=True, stratified=True,
+                      seed=42)
     alg.set_params(n_estimators=cvresult.shape[0])
     print("Optimal Estimators: {}".format(alg.n_estimators))
     return alg
@@ -83,7 +86,7 @@ def tune(X_train, y_train, X_test, y_test):
 
     gsearch1 = GridSearchCV(estimator=model, param_grid=param_test1,
                             scoring='precision_weighted', n_jobs=data.N_JOBS, iid=False,
-                            cv=8, verbose=1)
+                            cv=CV_FOLDS, verbose=1)
     gsearch1.fit(X_train, y_train)
 
     model = gsearch1.best_estimator_
