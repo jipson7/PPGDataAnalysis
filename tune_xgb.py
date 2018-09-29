@@ -1,7 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
 
-import pandas as pd
 import xgboost as xgb
 from xgboost.sklearn import XGBClassifier
 
@@ -9,43 +8,24 @@ from sklearn import metrics
 from sklearn.model_selection import GridSearchCV
 import data
 
-
-import matplotlib.pylab as plt
 from matplotlib.pylab import rcParams
 rcParams['figure.figsize'] = 12, 4
 
 CV_FOLDS = 8
 
 
-# TODO other metrics? auc?
 def print_model_performance(model, X_train, y_train, X_test, y_test):
     metric = 'map'
     # Fit the algorithm on the data
     model.fit(X_train, y_train, eval_metric=metric)
 
-    # Predict training set:
-    train_predictions = model.predict(X_train)
-    train_predprob = model.predict_proba(X_train)[:, 1]
-
     # Predict test sets
     test_predictions = model.predict(X_test)
     test_predprob = model.predict_proba(X_test)[:, 1]
 
-    # Print model report:
-    print("Accuracy (Train): {}".format(metrics.accuracy_score(y_train, train_predictions)))
-    print("{} Score (Train): {}".format(metric, metrics.roc_auc_score(y_train, train_predprob)))
-
     print("Accuracy (Test): {}".format(metrics.accuracy_score(y_test, test_predictions)))
-    print("{} Score (Test): {}".format(metric, metrics.roc_auc_score(y_test, test_predprob)))
-
-    feat_imp = pd.Series(model.get_booster().get_fscore()).sort_values(ascending=False)
-
-    # get top 100 features
-    feat_top = feat_imp[:25]
-
-    feat_top.plot(kind='bar', title='Feature Importances')
-    plt.ylabel('Feature Importance Score')
-    plt.savefig("./local-cache/experiments/tune_xgb.png")
+    print("Precision Score (Test): {}".format(metrics.precision_score(y_test, test_predictions, average='weighted')))
+    print("AUC Score (Test): {}".format(metrics.roc_auc_score(y_test, test_predprob)))
 
 
 def tune_nestimators(alg, X_train, y_train,
@@ -72,7 +52,7 @@ def tune_params(model, X_train, y_train, param_test):
 
 def tune(X_train, y_train, X_test, y_test):
     xgb1 = XGBClassifier(
-        learning_rate=0.01,
+        learning_rate=0.015,
         n_estimators=1000,
         max_depth=3,
         min_child_weight=5,
@@ -87,33 +67,25 @@ def tune(X_train, y_train, X_test, y_test):
 
     model = tune_nestimators(xgb1, X_train, y_train)
 
-    print_model_performance(model, X_train, y_train, X_test, y_test)
-
     param_test = {
-        'max_depth': range(3, 10, 2),
-        'min_child_weight': range(1, 6, 2)
+        'max_depth': [3, 4, 5, 6, 7, 8],
+        'min_child_weight': [3, 4, 5, 6, 7]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print_model_performance(model, X_train, y_train, X_test, y_test)
-
     param_test = {
-        'gamma':[i/10.0 for i in range(0,5)]
+        'gamma':[0.0, 0.1, 0.2, 0.3]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print_model_performance(model, X_train, y_train, X_test, y_test)
-
     param_test = {
-        'subsample': [i / 10.0 for i in range(6, 10)],
-        'colsample_bytree': [i / 10.0 for i in range(6, 10)]
+        'subsample': [0.7, 0.8, 0.9],
+        'colsample_bytree': [0.7, 0.8, 0.9]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print_model_performance(model, X_train, y_train, X_test, y_test)
-
     param_test = {
-        'reg_alpha': [1e-7, 1e-8, 1e-9, 1e-10, 1e-6, 1e-5, 1e-4]
+        'reg_alpha': [1e-6, 1e-7, 1e-8, 1e-9]
     }
     model = tune_params(model, X_train, y_train, param_test)
 

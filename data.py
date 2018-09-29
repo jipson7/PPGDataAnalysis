@@ -157,12 +157,12 @@ class DataLoader:
     def load_oxygen(self, trial_id, y_pred):
         devices = self._load_devices(trial_id)
 
-        wrist_oxygen = self._extract_label(devices[0])
-        fingertip_oxygen = self._extract_label(devices[1])
+        wrist_oxygen = pd.DataFrame(self._extract_label(devices[0]))
+        fingertip_oxygen = pd.DataFrame(self._extract_label(devices[1]))
 
         if not self.allow_overlap:
-            wrist_oxygen = wrist_oxygen[::self.window_size]
-            fingertip_oxygen = fingertip_oxygen[::self.window_size]
+            wrist_oxygen = wrist_oxygen.iloc[::self.window_size]
+            fingertip_oxygen = fingertip_oxygen.iloc[::self.window_size]
 
         # Filter classified values
         pruned_oxygen = wrist_oxygen.where(y_pred.reshape(wrist_oxygen.shape))

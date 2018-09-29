@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rsync -ruv --exclude 'local-cache' ./* mel:/scratch/caleb/ppg
+rsync -ruv --exclude 'local-cache' --exclude '__pycache__' ./* mel:/scratch/caleb/ppg
