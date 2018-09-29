@@ -14,10 +14,12 @@ import matplotlib.pylab as plt
 from matplotlib.pylab import rcParams
 rcParams['figure.figsize'] = 12, 4
 
-CV_FOLDS = 4
+CV_FOLDS = 8
 
 
-def print_model_performance(model, X_train, y_train, X_test, y_test, metric='map'):
+# TODO other metrics? auc?
+def print_model_performance(model, X_train, y_train, X_test, y_test):
+    metric = 'map'
     # Fit the algorithm on the data
     model.fit(X_train, y_train, eval_metric=metric)
 
@@ -62,7 +64,7 @@ def tune_params(model, X_train, y_train, param_test):
 
     gsearch = GridSearchCV(estimator=model, param_grid=param_test,
                             scoring='precision_weighted', iid=False,
-                            cv=CV_FOLDS, verbose=1)
+                            cv=CV_FOLDS)
     gsearch.fit(X_train, y_train)
     print("Best Params: {}".format(gsearch.best_params_))
     return gsearch.best_estimator_
@@ -83,48 +85,38 @@ def tune(X_train, y_train, X_test, y_test):
         reg_alpha=1e-7,
         seed=27)
 
-    print("Tuning n_estimators with early stopping")
     model = tune_nestimators(xgb1, X_train, y_train)
 
-    print("Stage 1 performance")
     print_model_performance(model, X_train, y_train, X_test, y_test)
 
-    print("Tuning depth and min child weight with grid search")
     param_test = {
         'max_depth': range(3, 10, 2),
         'min_child_weight': range(1, 6, 2)
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print("Stage 2 Performance")
     print_model_performance(model, X_train, y_train, X_test, y_test)
 
-    print("Tuning gamma")
     param_test = {
         'gamma':[i/10.0 for i in range(0,5)]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print("Stage 3 Performance")
     print_model_performance(model, X_train, y_train, X_test, y_test)
 
-    print("Tuning Sub sample and col sample by tree")
     param_test = {
         'subsample': [i / 10.0 for i in range(6, 10)],
         'colsample_bytree': [i / 10.0 for i in range(6, 10)]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print("Stage 4 Performance")
     print_model_performance(model, X_train, y_train, X_test, y_test)
 
-    print("Tuning Regularization")
     param_test = {
         'reg_alpha': [1e-7, 1e-8, 1e-9, 1e-10, 1e-6, 1e-5, 1e-4]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
-    print("Stage 5 Performance")
     print_model_performance(model, X_train, y_train, X_test, y_test)
 
 
