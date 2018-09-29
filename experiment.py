@@ -26,7 +26,7 @@ def max_consecutive_nans(a):
         return (idx[1::2] - idx[::2]).max()
 
 
-def run_experiments(clf, trial_ids, data_loader):
+def run_experiments(clf, trial_ids, data_loader, cm_name='all'):
     log_name = EXPERIMENT_CACHE + "log-{}.txt".format(data_loader)
     log = open(log_name, 'w')
     cms = []
@@ -78,12 +78,12 @@ def run_experiments(clf, trial_ids, data_loader):
         print("Longest NaN window: {}\n".format(longest_window))
         log.write("Longest NaN window: {}\n".format(longest_window))
 
-    print('\nResults:\n')
+    print('Average of trial:\n')
     # Create average confusion matrix
     avg_cm = np.average(cms, axis=0)
     avg_cm = np.array(avg_cm).astype(int)
     data.plot_confusion_matrix(avg_cm)
-    plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '.png')
+    plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '-' + cm_name + '.png')
     plt.show()
 
     log.write("Average Weighted Precision: {0:.1%}\n".format(np.average(precisions_weighted)))
@@ -93,8 +93,8 @@ def run_experiments(clf, trial_ids, data_loader):
 
 
 def run():
-    # trial_ids = [43, 24, 40, 33, 36]  # Dark Skin
-    # trial_ids = [22, 23, 29, 31, 32, 20]  # Light skin
+    # trial_ids = [43, 24, 40, 33]  # Dark Skin
+    # trial_ids = [22, 23, 29, 31, 32, 36]  # Light skin
     trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
     clf = xgb.XGBClassifier(
         learning_rate=0.015,
@@ -109,9 +109,9 @@ def run():
         scale_pos_weight=3,
         reg_alpha=1e-6)
 
-    for t in [1.0]:
+    for t in [1.0, 2.0, 3.0]:
         dl = data.DataLoader(window_size=100, threshold=t, algo_name='maxim', features='comprehensive')
-        run_experiments(clf, trial_ids, dl)
+        run_experiments(clf, trial_ids, dl, cm_name='all')
 
 
 if __name__ == '__main__':
