@@ -30,17 +30,15 @@ def run_experiments(clf, trial_ids, data_loader):
     log_name = EXPERIMENT_CACHE + "log-{}.txt".format(data_loader)
     log = open(log_name, 'w')
     cms = []
-    precisions = []
     precisions_weighted = []
     avg_rmse_before = []
     avg_rmse_after = []
     for trial_id in trial_ids:
-        start_msg = "\nRunning experiments on trial " + str(trial_id) + '\n'
+        start_msg = "\n\nRunning experiments on trial " + str(trial_id) + "\n"
         log.write(start_msg)
         print(start_msg)
 
         # Prep leave 1 out data
-        print("Fitting classifier")
         training_ids = trial_ids.copy()
         training_ids.remove(trial_id)
         X_train, y_train = data_loader.load(training_ids)
@@ -48,14 +46,10 @@ def run_experiments(clf, trial_ids, data_loader):
         X_test, y_test = data_loader.load([trial_id])
         y_pred = clf.predict(X_test)
 
-        print("Calculating Results")
         # Get Precision Scores
-        precision = precision_score(y_test, y_pred)
-        log.write("Precision {}\n".format(precision))
-        precisions.append(precision)
         precision_weighted = precision_score(y_test, y_pred, average='weighted')
-        log.write("Precision Weighted {}\n".format(precision_weighted))
-        print("Precision Weighted {}\n".format(precision_weighted))
+        log.write("Precision Weighted {0:.1%}\n".format(precision_weighted))
+        print("Precision Weighted {0:.1%}\n".format(precision_weighted))
         precisions_weighted.append(precision_weighted)
 
         # Create confusion matrix
@@ -71,15 +65,18 @@ def run_experiments(clf, trial_ids, data_loader):
         avg_rmse_before.append(rmse_before)
         rmse_after = rmse(pruned_oxygen, fingertip_oxygen)
         avg_rmse_after.append(rmse_after)
-        rmse_result = ("RMSE Before: {}, After: {}\n".format(rmse_before, rmse_after))
+        rmse_result = ("RMSE Before: {0:.1f}%\n".format(rmse_before))
+        print(rmse_result)
+        log.write(rmse_result)
+        rmse_result = ("RMSE After: {0:.1f}%\n".format(rmse_after))
         print(rmse_result)
         log.write(rmse_result)
 
         # Longest Nan Wait
         n = max_consecutive_nans(pruned_oxygen.values.flatten())
         longest_window = datetime.timedelta(seconds=(n * 40 * 100) / 1000)
-        print("Longest NaN window: {}".format(longest_window))
-        log.write("Longest NaN window: {}".format(longest_window))
+        print("Longest NaN window: {}\n".format(longest_window))
+        log.write("Longest NaN window: {}\n".format(longest_window))
 
     print('\nResults:\n')
     # Create average confusion matrix
@@ -89,10 +86,9 @@ def run_experiments(clf, trial_ids, data_loader):
     plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '.png')
     plt.show()
 
-    log.write("Average Precision: {}\n".format(np.average(precisions)))
-    log.write("Average Weighted Precision: {}\n".format(np.average(precisions_weighted)))
+    log.write("Average Weighted Precision: {0:.1%}\n".format(np.average(precisions_weighted)))
 
-    log.write("Average RMSE Before: {}, After: {}\n".format(np.nanmean(avg_rmse_before), np.nanmean(avg_rmse_after)))
+    log.write("Average RMSE Before: {0:.1f}%, After: {0:.1f}%\n".format(np.nanmean(avg_rmse_before), np.nanmean(avg_rmse_after)))
     log.close()
 
 
