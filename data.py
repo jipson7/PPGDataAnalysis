@@ -154,7 +154,7 @@ class DataLoader:
         print_label_counts(y)
         return X, y
 
-    def load_oxygen(self, trial_id, y_pred):
+    def load_oxygen(self, trial_id, y_pred=None):
         devices = self._load_devices(trial_id)
 
         wrist_oxygen = pd.DataFrame(self._extract_label(devices[0]))
@@ -164,13 +164,15 @@ class DataLoader:
             wrist_oxygen = wrist_oxygen.iloc[::self.window_size]
             fingertip_oxygen = fingertip_oxygen.iloc[::self.window_size]
 
-        # Filter classified values
-        pruned_oxygen = wrist_oxygen.where(y_pred.reshape(wrist_oxygen.shape))
+        if y_pred is not None:
+            pruned_oxygen = wrist_oxygen.where(y_pred.reshape(wrist_oxygen.shape))
+            pruned_oxygen.columns = ['Wrist Oxygen Reliable']
+        else:
+            pruned_oxygen = None
 
         # Rename Columns
         wrist_oxygen.columns = ['Wrist Oxygen']
         fingertip_oxygen.columns = ['Fingertip Oxygen']
-        pruned_oxygen.columns = ['Wrist Oxygen Reliable']
 
         return wrist_oxygen, pruned_oxygen, fingertip_oxygen
 

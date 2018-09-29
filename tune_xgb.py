@@ -54,38 +54,43 @@ def tune(X_train, y_train, X_test, y_test):
     xgb1 = XGBClassifier(
         learning_rate=0.015,
         n_estimators=1000,
-        max_depth=3,
-        min_child_weight=5,
-        gamma=0,
+        max_depth=9,
+        min_child_weight=3,
+        gamma=0.2,
         subsample=0.8,
         colsample_bytree=0.9,
         objective='binary:logistic',
         nthread=data.N_JOBS,
-        scale_pos_weight=1,
-        reg_alpha=1e-7,
+        scale_pos_weight=3,
+        reg_alpha=1e-6,
         seed=27)
 
     model = tune_nestimators(xgb1, X_train, y_train)
 
     param_test = {
-        'max_depth': [3, 4, 5, 6, 7, 8],
-        'min_child_weight': [3, 4, 5, 6, 7]
+        'scale_pos_weight': [1, 2, 3, 4]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
     param_test = {
-        'gamma':[0.0, 0.1, 0.2, 0.3]
+        'max_depth': range(3, 10, 2),
+        'min_child_weight': range(1, 6, 2)
     }
     model = tune_params(model, X_train, y_train, param_test)
 
     param_test = {
-        'subsample': [0.7, 0.8, 0.9],
-        'colsample_bytree': [0.7, 0.8, 0.9]
+        'gamma':[i/10.0 for i in range(0,5)]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
     param_test = {
-        'reg_alpha': [1e-6, 1e-7, 1e-8, 1e-9]
+        'subsample': [i / 10.0 for i in range(6, 10)],
+        'colsample_bytree': [i / 10.0 for i in range(6, 10)]
+    }
+    model = tune_params(model, X_train, y_train, param_test)
+
+    param_test = {
+        'reg_alpha': [1e-6, 1e-7, 1e-8, 1e-5, 1e-2]
     }
     model = tune_params(model, X_train, y_train, param_test)
 
@@ -94,8 +99,8 @@ def tune(X_train, y_train, X_test, y_test):
 
 if __name__ =='__main__':
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='maxim', features='comprehensive')
-    training_ids = [24, 29, 31, 32, 33, 36, 40, 43]
-    test_ids = [22, 23]
+    training_ids = [22, 23, 24, 29, 31, 32, 33]
+    test_ids = [36, 40, 43, 22]
     X_train, y_train = dl.load(training_ids)
     X_test, y_test = dl.load(test_ids)
     tune(X_train, y_train, X_test, y_test)

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rsync -ruv mel:/scratch/caleb/ppg/local-cache/* ./local-cache/
+rsync -ruv --exclude features mel22:/scratch/caleb/ppg/local-cache/* ./local-cache/

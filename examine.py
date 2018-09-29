@@ -29,14 +29,12 @@ def print_stats(wrist_device, true_device, threshold):
     print("Positive Labels: " + str(true_reliable_count))
 
 
-# if __name__ == '__main__':
-#     TRIAL = 23
-for TRIAL in data.list_trials():
-    ALGO = 'maxim'
+if __name__ == '__main__':
+
     THRESHOLD = 1.0
 
-    devices = data.load_devices(TRIAL, algo_name=ALGO)
+    dl = data.DataLoader(window_size=100, threshold=THRESHOLD, algo_name='maxim', features='comprehensive')
+    for trial_id in data.list_trials():
 
-    wrist_oxygen = devices[0][['oxygen']]
-    true_oxygen = devices[1][['oxygen']]
-    print_stats(wrist_oxygen, true_oxygen, THRESHOLD)
+        wrist_oxygen, _, fingertip_oxygen = dl.load_oxygen(trial_id)
+        print_stats(wrist_oxygen, fingertip_oxygen, THRESHOLD)

@@ -225,6 +225,5 @@ tags
 
 # End of https://www.gitignore.io/api/vim,macos,python,pycharm
 
-.idea/
 local-cache
 figs

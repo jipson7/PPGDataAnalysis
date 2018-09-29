@@ -1,4 +1,5 @@
 import math
+import datetime
 import matplotlib
 import numpy as np
 import xgboost as xgb
@@ -15,6 +16,14 @@ def rmse(d1, d2):
     d1 = d1.values.flatten()
     d2 = d2.values.flatten()
     return math.sqrt(np.nanmean((np.subtract(d2, d1)) ** 2))
+
+def max_consecutive_nans(a):
+    mask = np.concatenate(([False], np.isnan(a), [False]))
+    if ~mask.any():
+        return 0
+    else:
+        idx = np.nonzero(mask[1:] != mask[:-1])[0]
+        return (idx[1::2] - idx[::2]).max()
 
 
 def run_experiments(clf, trial_ids, data_loader):
@@ -45,7 +54,8 @@ def run_experiments(clf, trial_ids, data_loader):
         log.write("Precision {}\n".format(precision))
         precisions.append(precision)
         precision_weighted = precision_score(y_test, y_pred, average='weighted')
-        log.write("Precision Weighted{}\n".format(precision_weighted))
+        log.write("Precision Weighted {}\n".format(precision_weighted))
+        print("Precision Weighted {}\n".format(precision_weighted))
         precisions_weighted.append(precision_weighted)
 
         # Create confusion matrix
@@ -65,36 +75,47 @@ def run_experiments(clf, trial_ids, data_loader):
         print(rmse_result)
         log.write(rmse_result)
 
+        # Longest Nan Wait
+        n = max_consecutive_nans(pruned_oxygen.values.flatten())
+        longest_window = datetime.timedelta(seconds=(n * 40 * 100) / 1000)
+        print("Longest NaN window: {}".format(longest_window))
+        log.write("Longest NaN window: {}".format(longest_window))
+
     print('\nResults:\n')
     # Create average confusion matrix
     avg_cm = np.average(cms, axis=0)
     avg_cm = np.array(avg_cm).astype(int)
     data.plot_confusion_matrix(avg_cm)
     plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '.png')
+    plt.show()
 
     log.write("Average Precision: {}\n".format(np.average(precisions)))
     log.write("Average Weighted Precision: {}\n".format(np.average(precisions_weighted)))
 
-    log.write("Average RMSE Before: {}, After: {}\n".format(np.average(avg_rmse_before), np.average(avg_rmse_after)))
+    log.write("Average RMSE Before: {}, After: {}\n".format(np.nanmean(avg_rmse_before), np.nanmean(avg_rmse_after)))
     log.close()
 
 
 def run():
-    trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
+    # trial_ids = [43, 24, 40, 33, 36]  # Dark Skin
+    # trial_ids = [22, 23, 29, 31, 32, 20]  # Light skin
+    trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
     clf = xgb.XGBClassifier(
         learning_rate=0.015,
         n_estimators=250,
-        max_depth=4,
-        min_child_weight=7,
-        gamma=0.1,
-        subsample=0.7,
-        colsample_bytree=0.8,
+        max_depth=5,
+        min_child_weight=5,
+        gamma=0.0,
+        subsample=0.8,
+        colsample_bytree=0.9,
         objective='binary:logistic',
         nthread=data.N_JOBS,
-        scale_pos_weight=1,
+        scale_pos_weight=3,
         reg_alpha=1e-6)
-    dl = data.DataLoader(window_size=100, threshold=3.0, algo_name='maxim', features='comprehensive')
-    run_experiments(clf, trial_ids, dl)
+
+    for t in [1.0]:
+        dl = data.DataLoader(window_size=100, threshold=t, algo_name='maxim', features='comprehensive')
+        run_experiments(clf, trial_ids, dl)
 
 
 if __name__ == '__main__':
