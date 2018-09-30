@@ -67,8 +67,6 @@ def visualize_classifier_results(training_ids, test_id, dl):
     plt.ylim()
     plt.savefig(data.GRAPH_CACHE + 'classifier-{}-{}.png'.format(trial_id, str(dl)))
 
-
-
 if __name__ == '__main__':
 
 

@@ -30,6 +30,8 @@ def run_experiments(clf, trial_ids, data_loader, data_name='all'):
     log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(data_loader, data_name)
     log = open(log_name, 'w')
     cms = []
+    maxim_error = []
+    enhanced_error = []
     for trial_id in trial_ids:
         start_msg = "\n\nRunning experiments on trial " + str(trial_id) + "\n"
         log.write(start_msg)
