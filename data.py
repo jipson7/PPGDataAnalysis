@@ -21,11 +21,12 @@ CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
 EXPERIMENT_CACHE = CACHE_ROOT + 'experiments/'
 FEATURE_CACHE = CACHE_ROOT + 'features/'
+GRAPH_CACHE = CACHE_ROOT + 'graphs/'
 
 warnings.filterwarnings('ignore')
 
 
-caches = [CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE, FEATURE_CACHE]
+caches = [CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE, FEATURE_CACHE, GRAPH_CACHE]
 
 for cache in caches:
     pathlib.Path(cache).mkdir(parents=True, exist_ok=True)

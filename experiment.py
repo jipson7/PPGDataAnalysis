@@ -26,13 +26,10 @@ def max_consecutive_nans(a):
         return (idx[1::2] - idx[::2]).max()
 
 
-def run_experiments(clf, trial_ids, data_loader, cm_name='all'):
-    log_name = EXPERIMENT_CACHE + "log-{}.txt".format(data_loader)
+def run_experiments(clf, trial_ids, data_loader, data_name='all'):
+    log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(data_loader, data_name)
     log = open(log_name, 'w')
     cms = []
-    precisions_weighted = []
-    avg_rmse_before = []
-    avg_rmse_after = []
     for trial_id in trial_ids:
         start_msg = "\n\nRunning experiments on trial " + str(trial_id) + "\n"
         log.write(start_msg)
@@ -50,7 +47,6 @@ def run_experiments(clf, trial_ids, data_loader, cm_name='all'):
         precision_weighted = precision_score(y_test, y_pred, average='weighted')
         log.write("Precision Weighted {0:.1%}\n".format(precision_weighted))
         print("Precision Weighted {0:.1%}\n".format(precision_weighted))
-        precisions_weighted.append(precision_weighted)
 
         # Create confusion matrix
         cm = confusion_matrix(y_test, y_pred)
@@ -62,9 +58,7 @@ def run_experiments(clf, trial_ids, data_loader, cm_name='all'):
 
         # Get RMSE
         rmse_before = rmse(wrist_oxygen, fingertip_oxygen)
-        avg_rmse_before.append(rmse_before)
         rmse_after = rmse(pruned_oxygen, fingertip_oxygen)
-        avg_rmse_after.append(rmse_after)
         rmse_result = ("RMSE Before: {0:.1f}%\n".format(rmse_before))
         print(rmse_result)
         log.write(rmse_result)
@@ -78,24 +72,20 @@ def run_experiments(clf, trial_ids, data_loader, cm_name='all'):
         print("Longest NaN window: {}\n".format(longest_window))
         log.write("Longest NaN window: {}\n".format(longest_window))
 
-    print('Average of trial:\n')
+
+    log.close()
     # Create average confusion matrix
     avg_cm = np.average(cms, axis=0)
     avg_cm = np.array(avg_cm).astype(int)
     data.plot_confusion_matrix(avg_cm)
-    plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '-' + cm_name + '.png')
+    plt.savefig(CM_CACHE + 'cm-' + str(data_loader) + '-' + data_name + '.png')
     plt.show()
 
-    log.write("Average Weighted Precision: {0:.1%}\n".format(np.average(precisions_weighted)))
 
-    log.write("Average RMSE Before: {0:.1f}%, After: {0:.1f}%\n".format(np.nanmean(avg_rmse_before), np.nanmean(avg_rmse_after)))
-    log.close()
-
-
-def run():
-    # trial_ids = [43, 24, 40, 33]  # Dark Skin
+def run_all():
+    trial_ids = [43, 24, 40, 33]  # Dark Skin
     # trial_ids = [22, 23, 29, 31, 32, 36]  # Light skin
-    trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
+    # trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
     clf = xgb.XGBClassifier(
         learning_rate=0.015,
         n_estimators=250,
@@ -111,9 +101,7 @@ def run():
 
     for t in [1.0, 2.0, 3.0]:
         dl = data.DataLoader(window_size=100, threshold=t, algo_name='maxim', features='comprehensive')
-        run_experiments(clf, trial_ids, dl, cm_name='all')
-
+        run_experiments(clf, trial_ids, dl, data_name='dark')
 
 if __name__ == '__main__':
-    run()
-
+    run_all()
