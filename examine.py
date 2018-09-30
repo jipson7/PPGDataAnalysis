@@ -75,6 +75,7 @@ if __name__ == '__main__':
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
 
     for trial_id in trial_ids:
+        print("Trial {}".format(trial_id))
         training_ids = trial_ids.copy()
         training_ids.remove(trial_id)
 
