@@ -92,15 +92,15 @@ class Experiment(object):
 
         plot_cdf(rmse_befores, dl.algo.upper() + " Algorithm RMSE")
         self.log.write("RMSE before: {}\n".format(rmse_befores))
-        plt.savefig(GRAPH_CACHE + 'cdf-' + str(dl) + '-rmse-before.png')
+        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-before.png'.format(self.experiment_name, self.dl))
 
         plot_cdf(rmse_afters, "Pruned RMSE")
         self.log.write("RMSE After: {}\n".format(rmse_afters))
-        plt.savefig(GRAPH_CACHE + 'cdf-' + str(dl) + '-rmse-after.png')
+        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-after.png'.format(self.experiment_name, self.dl))
 
         plot_cdf(nans, "Time Between Readings (Seconds)")
         self.log.write("TIme Between readings: {}\n".format(nans))
-        plt.savefig(GRAPH_CACHE + 'cdf-' + str(dl) + '-readings.png')
+        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-readings.png'.format(self.experiment_name, self.dl))
 
         self.log.write("Median Precision {}\n".format(np.nanmedian(precisions)))
         self.log.write("Median RMSE before {}\n".format(np.nanmedian(rmse_befores)))
@@ -144,10 +144,16 @@ if __name__ == '__main__':
     dark_ids = [43, 24, 40, 33, 36]  # Dark Skin
     light_ids = [22, 23, 29, 31, 32]  # Light skin
     all_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
+    best_ids = [22, 23, 24, 29, 31, 32]
 
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
 
     Experiment('all', dl, all_ids)
     Experiment('light-dark', dl, light_ids, validation_ids=dark_ids)
     Experiment('dark-light', dl, dark_ids, validation_ids=light_ids)
+
+    Experiment('light', dl, light_ids)
+    Experiment('dark', dl, dark_ids)
+
+    Experiment('best', dl, best_ids)
 
