@@ -38,12 +38,12 @@ class Experiment(object):
         else:
             folds = [(training_ids, test_id) for test_id in validation_ids]
         self.folds = folds
-        log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(data_loader, experiment_name)
-        self.log = open(log_name, 'w')
+        self.log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(data_loader, experiment_name)
         self.run()
 
     def run(self):
-        self.log.write("Running Experiment {}\n".format(self.experiment_name))
+        log = open(self.log_name, 'w')
+        log.write("Running Experiment {}\n".format(self.experiment_name))
         cms = []
         precisions = []
         rmse_befores = []
@@ -53,7 +53,7 @@ class Experiment(object):
         for training_ids, test_id in self.folds:
             msg = "\nRunning {} against {} for {}\n".format(training_ids, test_id, self.experiment_name)
             print(msg)
-            self.log.write(msg)
+            log.write(msg)
             X_train, y_train = self.dl.load(training_ids)
             self.clf.fit(X_train, y_train)
             X_test, y_test = self.dl.load([test_id])
@@ -61,12 +61,12 @@ class Experiment(object):
             # Get Precision Scores
             precision_weighted = precision_score(y_test, y_pred, average='weighted')
             precisions.append(precision_weighted)
-            self.log.write("Precision Weighted {0:.1%}\n".format(precision_weighted))
+            log.write("Precision Weighted {0:.1%}\n".format(precision_weighted))
 
             # Create confusion matrix
             cm = confusion_matrix(y_test, y_pred)
             cms.append(cm)
-            self.log.write("CM {}\n".format(cm))
+            log.write("CM {}\n".format(cm))
 
             # Get Before and after oxygen values
             wrist_oxygen, pruned_oxygen, fingertip_oxygen = self.dl.load_oxygen(test_id, y_pred)
@@ -76,13 +76,13 @@ class Experiment(object):
             rmse_befores.append(rmse_before)
             rmse_after = rmse(pruned_oxygen, fingertip_oxygen)
             rmse_afters.append(rmse_after)
-            self.log.write("RMSE Before: {0:.1f}%\n".format(rmse_before))
-            self.log.write("RMSE After: {0:.1f}%\n".format(rmse_after))
+            log.write("RMSE Before: {0:.1f}%\n".format(rmse_before))
+            log.write("RMSE After: {0:.1f}%\n".format(rmse_after))
 
             # Longest Nan Wait
             n = max_consecutive_nans(pruned_oxygen.values.flatten())
             longest_window = datetime.timedelta(seconds=(n * 40 * 100) / 1000)
-            self.log.write("Longest NaN window: {}\n".format(longest_window))
+            log.write("Longest NaN window: {}\n".format(longest_window))
             nans.append(longest_window.total_seconds())
 
         avg_cm = np.average(cms, axis=0)
@@ -91,28 +91,28 @@ class Experiment(object):
         plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.png')
 
         plot_cdf(rmse_befores, dl.algo.upper() + " Algorithm RMSE")
-        self.log.write("RMSE before: {}\n".format(rmse_befores))
+        log.write("RMSE before: {}\n".format(rmse_befores))
         plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-before.png'.format(self.experiment_name, self.dl))
 
         plot_cdf(rmse_afters, "Pruned RMSE")
-        self.log.write("RMSE After: {}\n".format(rmse_afters))
+        log.write("RMSE After: {}\n".format(rmse_afters))
         plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-after.png'.format(self.experiment_name, self.dl))
 
         plot_cdf(nans, "Time Between Readings (Seconds)")
-        self.log.write("TIme Between readings: {}\n".format(nans))
+        log.write("TIme Between readings: {}\n".format(nans))
         plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-readings.png'.format(self.experiment_name, self.dl))
 
-        self.log.write("Median Precision {}\n".format(np.nanmedian(precisions)))
-        self.log.write("Median RMSE before {}\n".format(np.nanmedian(rmse_befores)))
-        self.log.write("Median RMSE after {}\n".format(np.nanmedian(rmse_afters)))
-        self.log.write("Median Time between readings {} (seconds)\n".format(np.nanmedian(nans)))
+        log.write("Median Precision {}\n".format(np.nanmedian(precisions)))
+        log.write("Median RMSE before {}\n".format(np.nanmedian(rmse_befores)))
+        log.write("Median RMSE after {}\n".format(np.nanmedian(rmse_afters)))
+        log.write("Median Time between readings {} (seconds)\n".format(np.nanmedian(nans)))
 
-        self.log.write("Mean Precision {}\n".format(np.nanmean(precisions)))
-        self.log.write("Mean RMSE before {}\n".format(np.nanmean(rmse_befores)))
-        self.log.write("Mean RMSE after {}\n".format(np.nanmean(rmse_afters)))
-        self.log.write("Mean Time between readings {} (seconds)\n".format(np.nanmean(nans)))
+        log.write("Mean Precision {}\n".format(np.nanmean(precisions)))
+        log.write("Mean RMSE before {}\n".format(np.nanmean(rmse_befores)))
+        log.write("Mean RMSE after {}\n".format(np.nanmean(rmse_afters)))
+        log.write("Mean Time between readings {} (seconds)\n".format(np.nanmean(nans)))
 
-        self.log.close()
+        log.close()
 
 
 def plot_cdf(data, title):
