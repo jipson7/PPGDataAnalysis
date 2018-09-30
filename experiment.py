@@ -72,7 +72,7 @@ def run_experiment(log, clf, data_loader, training_ids, trial_id):
     longest_window = datetime.timedelta(seconds=(n * 40 * 100) / 1000)
     print("Longest NaN window: {}\n".format(longest_window))
     log.write("Longest NaN window: {}\n".format(longest_window))
-    return cm, precision_weighted, rmse_before, rmse_after, n
+    return cm, precision_weighted, rmse_before, rmse_after, longest_window.total_seconds()
 
 
 def run_all():
@@ -92,43 +92,43 @@ def run_all():
         nthread=data.N_JOBS,
         scale_pos_weight=3,
         reg_alpha=1e-6)
+    for algo in ['maxim', 'enhanced']:
+        for t in [1.0, 2.0, 3.0]:
+            dl = data.DataLoader(window_size=100, threshold=t, algo_name=algo, features='comprehensive')
+            log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(dl, data_name)
+            log = open(log_name, 'w')
+            cms = []
+            precisions = []
+            rmse_befores = []
+            rmse_afters = []
+            nans = []
 
-    for t in [1.0, 2.0, 3.0]:
-        dl = data.DataLoader(window_size=100, threshold=t, algo_name='maxim', features='comprehensive')
-        log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(dl, data_name)
-        log = open(log_name, 'w')
-        cms = []
-        precisions = []
-        rmse_befores = []
-        rmse_afters = []
-        nans = []
+            for trial_id in trial_ids:
+                # Prep leave 1 out data
+                training_ids = trial_ids.copy()
+                training_ids.remove(trial_id)
+                cm, precision, rmse_before, rmse_after, nan = run_experiment(log, clf, dl, training_ids, trial_id)
+                cms.append(cm)
+                precisions.append(precision)
+                rmse_befores.append(rmse_before)
+                rmse_afters.append(rmse_after)
+                nans.append(nan)
 
-        for trial_id in trial_ids:
-            # Prep leave 1 out data
-            training_ids = trial_ids.copy()
-            training_ids.remove(trial_id)
-            cm, precision, rmse_before, rmse_after, nan = run_experiment(log, clf, dl, training_ids, trial_id)
-            cms.append(cm)
-            precisions.append(precision)
-            rmse_befores.append(rmse_before)
-            rmse_afters.append(rmse_after)
-            nans.append(nan)
+            log.close()
+            # Create average confusion matrix
+            avg_cm = np.average(cms, axis=0)
+            avg_cm = np.array(avg_cm).astype(int)
+            data.plot_confusion_matrix(avg_cm)
+            plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + data_name + '.png')
 
-        log.close()
-        # Create average confusion matrix
-        avg_cm = np.average(cms, axis=0)
-        avg_cm = np.array(avg_cm).astype(int)
-        data.plot_confusion_matrix(avg_cm)
-        plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + data_name + '.png')
+            plot_cdf(rmse_befores, "Maxim Algorithm RMSE")
+            plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-rmse-before.png')
 
-        plot_cdf(rmse_befores, "Maxim Algorithm RMSE")
-        plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-rmse-before.png')
+            plot_cdf(rmse_afters, "Pruned RMSE")
+            plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-rmse-after.png')
 
-        plot_cdf(rmse_befores, "Pruned RMSE")
-        plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-rmse-after.png')
-
-        plot_cdf(nans, "Time Between Readings")
-        plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-readings.png')
+            plot_cdf(nans, "Time Between Readings (Seconds)")
+            plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-readings.png')
 
 
 def run_one():
@@ -159,7 +159,7 @@ def run_one():
     log = open(log_name, 'w')
     cms = []
     for test_id in test_ids:
-        cm = run_experiment(log, clf, dl, training_ids, test_id)
+        cm, precision, rmse_before, rmse_after, nan = run_experiment(log, clf, dl, training_ids, test_id)
         cms.append(cm)
     avg_cm = np.average(cms, axis=0)
     avg_cm = np.array(avg_cm).astype(int)
