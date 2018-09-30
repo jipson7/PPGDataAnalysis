@@ -16,6 +16,7 @@ def plot_cdf(data, title):
     sorted_data = np.sort(data)
     yvals=np.arange(len(sorted_data))/float(len(sorted_data)-1)
     plt.plot(sorted_data,yvals)
+    plt.ylim(0.0, 1.0)
     plt.xlabel(title)
 
 
@@ -114,21 +115,32 @@ def run_all():
                 rmse_afters.append(rmse_after)
                 nans.append(nan)
 
-            log.close()
             # Create average confusion matrix
             avg_cm = np.average(cms, axis=0)
             avg_cm = np.array(avg_cm).astype(int)
             data.plot_confusion_matrix(avg_cm)
             plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + data_name + '.png')
 
+            print('Summary\n')
+
             plot_cdf(rmse_befores, "Maxim Algorithm RMSE")
+            log.write("RMSE before: {}\n".format(rmse_befores))
             plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-rmse-before.png')
 
             plot_cdf(rmse_afters, "Pruned RMSE")
+            log.write("RMSE After: {}\n".format(rmse_afters))
             plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-rmse-after.png')
 
             plot_cdf(nans, "Time Between Readings (Seconds)")
+            log.write("TIme Between readings: {}\n".format(nans))
             plt.savefig(GRAPH_CACHE +'cdf-' + str(dl) + '-readings.png')
+
+            log.write("Average Precision {}\n".format(np.nanmean(precisions)))
+            log.write("Average RMSE before {}\n".format(np.nanmean(rmse_befores)))
+            log.write("Average RMSE after {}\n".format(np.nanmean(rmse_afters)))
+            log.write("Average Time between readings {} (seconds)\n".format(np.nanmean(nans)))
+
+            log.close()
 
 
 def run_one():
@@ -158,16 +170,28 @@ def run_one():
     log_name = EXPERIMENT_CACHE + "log-{}-{}.txt".format(dl, experiment_name)
     log = open(log_name, 'w')
     cms = []
+    precisions = []
+    rmse_befores = []
+    rmse_afters = []
+    nans = []
     for test_id in test_ids:
         cm, precision, rmse_before, rmse_after, nan = run_experiment(log, clf, dl, training_ids, test_id)
         cms.append(cm)
+        precisions.append(precision)
+        rmse_befores.append(rmse_before)
+        rmse_afters.append(rmse_after)
+        nans.append(nan)
     avg_cm = np.average(cms, axis=0)
     avg_cm = np.array(avg_cm).astype(int)
     data.plot_confusion_matrix(avg_cm)
     plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + experiment_name + '.png')
     plt.show()
+    log.write("Average Precision {}\n".format(np.nanmean(precisions)))
+    log.write("Average RMSE before {}\n".format(np.nanmean(rmse_befores)))
+    log.write("Average RMSE after {}\n".format(np.nanmean(rmse_afters)))
+    log.write("Average Time between readings {} (seconds)\n".format(np.nanmean(nans)))
     log.close()
 
 if __name__ == '__main__':
-    run_all()
-    # run_one()
+    # run_all()
+    run_one()
