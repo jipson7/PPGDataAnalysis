@@ -23,7 +23,8 @@ class Experiment(object):
         objective='binary:logistic',
         nthread=data.N_JOBS,
         scale_pos_weight=3,
-        reg_alpha=1e-6)
+        reg_alpha=1e-6,
+        random_state=42)
 
     def __init__(self, experiment_name, data_loader, training_ids, validation_ids=None):
         self.experiment_name = experiment_name
@@ -83,13 +84,13 @@ class Experiment(object):
             longest_window = datetime.timedelta(seconds=(n * 40 * 100) / 1000)
             self.log.write("Longest NaN window: {}\n".format(longest_window))
             nans.append(longest_window.total_seconds())
-        # Create average confusion matrix
+
         avg_cm = np.average(cms, axis=0)
         avg_cm = np.array(avg_cm).astype(int)
         data.plot_confusion_matrix(avg_cm)
         plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.png')
 
-        plot_cdf(rmse_befores, "Maxim Algorithm RMSE")
+        plot_cdf(rmse_befores, dl.algo.upper() + " Algorithm RMSE")
         self.log.write("RMSE before: {}\n".format(rmse_befores))
         plt.savefig(GRAPH_CACHE + 'cdf-' + str(dl) + '-rmse-before.png')
 
@@ -105,6 +106,11 @@ class Experiment(object):
         self.log.write("Median RMSE before {}\n".format(np.nanmedian(rmse_befores)))
         self.log.write("Median RMSE after {}\n".format(np.nanmedian(rmse_afters)))
         self.log.write("Median Time between readings {} (seconds)\n".format(np.nanmedian(nans)))
+
+        self.log.write("Mean Precision {}\n".format(np.nanmean(precisions)))
+        self.log.write("Mean RMSE before {}\n".format(np.nanmean(rmse_befores)))
+        self.log.write("Mean RMSE after {}\n".format(np.nanmean(rmse_afters)))
+        self.log.write("Mean Time between readings {} (seconds)\n".format(np.nanmean(nans)))
 
         self.log.close()
 
