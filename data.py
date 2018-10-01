@@ -113,17 +113,15 @@ class DataLoader:
 
     def __init__(self, window_size=100,
                  threshold=1.0, algo_name='maxim',
-                 features='comprehensive', feature_limit=None,
-                 allow_overlap=False):
+                 features='comprehensive', feature_limit=None):
         self.window_size = window_size
         self.threshold = threshold
         self.algo = algo_name
         self.feature_type = features
         self.selected_features = None
         self.feature_limit = feature_limit
-        self.allow_overlap = allow_overlap
 
-    def load(self, trial_ids):
+    def load(self, trial_ids, iid=True):
         X_s = []
         y_s = []
         for trial_id in trial_ids:
@@ -131,7 +129,7 @@ class DataLoader:
             X = self._extract_features(devices, trial_id)
             y = pd.Series(data=self._create_reliability_label(devices))
             X.sort_index(axis=1, inplace=True)
-            if not self.allow_overlap:
+            if iid:
                 idx_iid = y.iloc[::self.window_size].index.values
                 X = X.loc[idx_iid]
                 y = y.loc[idx_iid]
@@ -156,13 +154,13 @@ class DataLoader:
         print_label_counts(y)
         return X, y
 
-    def load_oxygen(self, trial_id, y_pred=None):
+    def load_oxygen(self, trial_id, y_pred=None, iid=True):
         devices = self._load_devices(trial_id)
 
         wrist_oxygen = pd.DataFrame(self._extract_label(devices[0]))
         fingertip_oxygen = pd.DataFrame(self._extract_label(devices[1]))
 
-        if not self.allow_overlap:
+        if iid:
             wrist_oxygen = wrist_oxygen.iloc[::self.window_size]
             fingertip_oxygen = fingertip_oxygen.iloc[::self.window_size]
 
