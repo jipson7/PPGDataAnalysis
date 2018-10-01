@@ -148,12 +148,12 @@ if __name__ == '__main__':
 
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
 
-    # Experiment('all', dl, all_ids)
+    Experiment('all', dl, all_ids)
     # Experiment('light-dark', dl, light_ids, validation_ids=dark_ids)
     # Experiment('dark-light', dl, dark_ids, validation_ids=light_ids)
     #
     # Experiment('light', dl, light_ids)
     # Experiment('dark', dl, dark_ids)
 
-    Experiment('best', dl, best_ids)
+    # Experiment('best', dl, best_ids)
 
