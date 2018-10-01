@@ -5,7 +5,10 @@ from data import N_JOBS
 
 
 def optimize_classifier(training_ids, validation_ids, data_loader):
-    X_train, y_train = data_loader.load(training_ids, iid=True)
+
+    train_iid = True
+
+    X_train, y_train = data_loader.load(training_ids, iid=train_iid)
 
     X_test, y_test = data_loader.load(validation_ids, iid=False)
 
@@ -13,32 +16,31 @@ def optimize_classifier(training_ids, validation_ids, data_loader):
 
     fit_params = {
         "early_stopping_rounds": 50,
-        "eval_metric": 'map-',
+        "eval_metric": 'error',
         "eval_set": [[X_test, y_test]],
         "verbose": False
     }
 
-    scoring = 'precision_weighted'
+    scoring = 'f1_weighted'
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-    model = xgb.XGBClassifier(n_jobs=N_JOBS,
-                              n_estimators=MAX_ESTIMATOR)
+    model = xgb.XGBClassifier(n_jobs=N_JOBS, n_estimators=MAX_ESTIMATOR)
 
     parameters = [
         {'learning_rate': [0.1, 0.01, 0.001, 0.0001]},
-        {'scale_pos_weight': [1, 2, 3]},
         {'max_depth': range(3, 10, 2)},
         {'min_child_weight': range(1, 6, 2)},
         {'gamma': [i / 10.0 for i in range(0, 5)]},
         {'subsample': [i / 10.0 for i in range(6, 10)]},
         {'colsample_bytree': [i / 10.0 for i in range(6, 10)]},
-        {'reg_alpha': [1e-6, 1e-7, 1e-8, 1e-5, 1e-2]}
+        {'reg_alpha': [1e-6, 1e-7, 1e-8, 1e-5, 1e-2]},
+        {'scale_pos_weight': [1, 2, 3]}
     ]
 
     for parameter in parameters:
         clf = GridSearchCV(model, param_grid=parameter, scoring=scoring,
-                           cv=cv, n_jobs=1)
+                           cv=cv, n_jobs=1, iid=train_iid)
         clf.fit(X_train, y_train, **fit_params)
 
         print("\nParams: {}".format(clf.best_params_))
@@ -49,13 +51,11 @@ def optimize_classifier(training_ids, validation_ids, data_loader):
         model.n_estimators = MAX_ESTIMATOR
 
 
-
-
-
-
 def tune():
     training_ids = [22, 23, 24, 29, 31, 32, 33]
     validation_ids = [13, 20, 36, 40, 43]
+    # training_ids = [13, 24, 29, 31, 32]
+    # validation_ids = [22, 23]
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
     optimize_classifier(training_ids, validation_ids, dl)
 
