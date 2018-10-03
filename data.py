@@ -126,7 +126,7 @@ class DataLoader:
         y_s = []
         for trial_id in trial_ids:
             devices = self._load_devices(trial_id)
-            X = self._extract_features(devices, trial_id)
+            X = self._extract_features(devices[0], trial_id)
             y = pd.Series(data=self._create_reliability_label(devices))
             X.sort_index(axis=1, inplace=True)
             if iid:
@@ -248,15 +248,13 @@ class DataLoader:
 
         return pd.DataFrame(X_windowed, columns=column_names)
 
-    def _extract_features(self, devices, trial_id):
+    def _extract_features(self, wrist_device, trial_id):
 
-        pickle_path = FEATURE_CACHE + 'X{}-{}-{}-{}.pickle'.format(trial_id, self.window_size, self.algo, self.feature_type)
+        pickle_path = FEATURE_CACHE + 'X{}-{}-{}.pickle'.format(trial_id, self.window_size, self.feature_type)
 
         if os.path.isfile(pickle_path):
             return pickle.load(open(pickle_path, "rb"))
         else:
-
-            wrist_device = devices[0]
             input_columns = ['red', 'ir', 'gyro', 'accel']
             X_raw = wrist_device[input_columns]
 
