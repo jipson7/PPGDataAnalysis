@@ -67,17 +67,19 @@ def get_chart_data(trial_id):
 @app.route('/trials/<int:trial_id>/data', methods=['POST'])
 def save_data(trial_id):
     json = request.get_json()
-    reading = json.get('data')
-    timestamp = json.get('timestamp')
-    device = json.get('device')
+    package = json.get('readings')
+    devices_saved = set()
+    for datum in package:
+        reading = datum.get('data')
+        timestamp = datum.get('timestamp')
+        device = datum.get('device')
+        db.session.add(Data(timestamp, reading, device, trial_id))
+        devices_saved.add(device)
 
-    datum = Data(timestamp, reading, device, trial_id)
-
-    db.session.add(datum)
-
+    print("Saving {} readings, from devices: {}".format(len(package), devices_saved))
     try:
         db.session.commit()
-        print("Saved " + str(device))
+        print("Committed data points")
         return "Ok"
     except SQLAlchemyError as e:
         print(e)
