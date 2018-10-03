@@ -69,7 +69,7 @@ def visualize_classifier_results(training_ids, test_id, dl):
 
 
 def print_all_stats():
-    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
+    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
     for trial_id in data.list_trials():
         print("\nStats for trial: {}".format(trial_id))
         print_stats(trial_id, dl)

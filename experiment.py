@@ -4,6 +4,7 @@ import matplotlib
 import numpy as np
 import xgboost as xgb
 from sklearn.metrics import confusion_matrix, precision_score
+import trial_sets
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -13,13 +14,13 @@ from data import CM_CACHE, EXPERIMENT_CACHE, GRAPH_CACHE
 class Experiment(object):
 
     clf = xgb.XGBClassifier(
-        learning_rate=0.015,
-        n_estimators=250,
-        max_depth=5,
+        learning_rate=0.1,
+        n_estimators=55,
+        max_depth=9,
         min_child_weight=5,
         gamma=0.0,
         subsample=0.8,
-        colsample_bytree=0.9,
+        colsample_bytree=0.8,
         objective='binary:logistic',
         nthread=data.N_JOBS,
         scale_pos_weight=3,
@@ -148,12 +149,12 @@ if __name__ == '__main__':
 
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
 
-    Experiment('all', dl, all_ids)
+    # Experiment('all', dl, all_ids)
     # Experiment('light-dark', dl, light_ids, validation_ids=dark_ids)
     # Experiment('dark-light', dl, dark_ids, validation_ids=light_ids)
     #
     # Experiment('light', dl, light_ids)
     # Experiment('dark', dl, dark_ids)
 
-    # Experiment('best', dl, best_ids)
+    Experiment('top', dl, trial_sets.top_ids)
 
