@@ -11,19 +11,22 @@ import matplotlib.pyplot as plt
 import data
 from data import CM_CACHE, EXPERIMENT_CACHE, GRAPH_CACHE
 
+
 class Experiment(object):
+
+    iid = False
 
     clf = xgb.XGBClassifier(
         learning_rate=0.1,
         n_estimators=55,
         max_depth=9,
         min_child_weight=5,
-        gamma=0.0,
-        subsample=0.8,
+        gamma=0.2,
+        subsample=0.9,
         colsample_bytree=0.8,
         objective='binary:logistic',
         nthread=data.N_JOBS,
-        scale_pos_weight=3,
+        scale_pos_weight=2,
         reg_alpha=1e-6,
         random_state=42)
 
@@ -57,7 +60,7 @@ class Experiment(object):
             log.write(msg)
             X_train, y_train = self.dl.load(training_ids)
             self.clf.fit(X_train, y_train)
-            X_test, y_test = self.dl.load([test_id])
+            X_test, y_test = self.dl.load([test_id], iid=self.iid)
             y_pred = self.clf.predict(X_test)
             # Get Precision Scores
             precision_weighted = precision_score(y_test, y_pred, average='weighted')
@@ -70,7 +73,7 @@ class Experiment(object):
             log.write("CM {}\n".format(cm))
 
             # Get Before and after oxygen values
-            wrist_oxygen, pruned_oxygen, fingertip_oxygen = self.dl.load_oxygen(test_id, y_pred)
+            wrist_oxygen, pruned_oxygen, fingertip_oxygen = self.dl.load_oxygen(test_id, y_pred, iid=self.iid)
 
             # Get RMSE
             rmse_before = rmse(wrist_oxygen, fingertip_oxygen)
@@ -82,7 +85,9 @@ class Experiment(object):
 
             # Longest Nan Wait
             n = max_consecutive_nans(pruned_oxygen.values.flatten())
-            longest_window = datetime.timedelta(seconds=(n * 40 * 100) / 1000)
+            if self.iid:
+                n *= 100
+            longest_window = datetime.timedelta(seconds=(n * 40) / 1000)
             log.write("Longest NaN window: {}\n".format(longest_window))
             nans.append(longest_window.total_seconds())
 
@@ -147,7 +152,7 @@ if __name__ == '__main__':
     all_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
     best_ids = [22, 23, 24, 29, 31, 32]
 
-    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='maxim', features='comprehensive')
+    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
 
     # Experiment('all', dl, all_ids)
     # Experiment('light-dark', dl, light_ids, validation_ids=dark_ids)

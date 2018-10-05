@@ -54,8 +54,8 @@ def optimize_classifier(training_ids, validation_ids, data_loader):
 def tune():
     # training_ids = [22, 23, 24, 29, 31, 32, 33]
     # validation_ids = [13, 20, 36, 40, 43]
-    training_ids = [46, 47]
-    validation_ids = [48]
+    training_ids = [46, 47, 48, 49, 51]
+    validation_ids = [50, 52, 53]
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
     optimize_classifier(training_ids, validation_ids, dl)
 
