@@ -136,6 +136,7 @@ def rmse(d1, d2):
     d2 = d2.values.flatten()
     return math.sqrt(np.nanmean((np.subtract(d2, d1)) ** 2))
 
+
 def max_consecutive_nans(a):
     mask = np.concatenate(([False], np.isnan(a), [False]))
     if ~mask.any():
@@ -152,7 +153,7 @@ if __name__ == '__main__':
     all_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
     best_ids = [22, 23, 24, 29, 31, 32]
 
-    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
+    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='comprehensive')
 
     # Experiment('all', dl, all_ids)
     # Experiment('light-dark', dl, light_ids, validation_ids=dark_ids)

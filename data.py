@@ -15,7 +15,7 @@ from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, Effic
 from tsfresh.feature_selection.relevance import calculate_relevance_table
 
 np.random.seed(42)
-N_JOBS = 20
+N_JOBS = 10
 CACHE_ROOT = './local-cache/'
 CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
