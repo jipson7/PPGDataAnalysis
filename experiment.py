@@ -148,19 +148,7 @@ def max_consecutive_nans(a):
 
 if __name__ == '__main__':
 
-    dark_ids = [43, 24, 40, 33, 36]  # Dark Skin
-    light_ids = [22, 23, 29, 31, 32]  # Light skin
-    all_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]  # All 10
-    best_ids = [22, 23, 24, 29, 31, 32]
-
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='comprehensive')
-
-    # Experiment('all', dl, all_ids)
-    # Experiment('light-dark', dl, light_ids, validation_ids=dark_ids)
-    # Experiment('dark-light', dl, dark_ids, validation_ids=light_ids)
-    #
-    # Experiment('light', dl, light_ids)
-    # Experiment('dark', dl, dark_ids)
 
     Experiment('top', dl, trial_sets.top_ids)
 

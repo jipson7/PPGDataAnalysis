@@ -15,7 +15,7 @@ from tsfresh.feature_extraction.settings import ComprehensiveFCParameters, Effic
 from tsfresh.feature_selection.relevance import calculate_relevance_table
 
 np.random.seed(42)
-N_JOBS = 10
+N_JOBS = 20
 CACHE_ROOT = './local-cache/'
 CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
@@ -268,11 +268,14 @@ class DataLoader:
                 features = MinimalFCParameters()
             else:
                 raise RuntimeError("Invalid feature type")
+            print("Extracting features for trial " + str(trial_id))
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  n_jobs=N_JOBS,
                                  default_fc_parameters=features)
+            print("Imputing")
             impute(X)
+            print("Saving pickle")
             pickle.dump(X, open(pickle_path, "wb"))
             return X
 
