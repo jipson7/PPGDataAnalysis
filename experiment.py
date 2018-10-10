@@ -18,16 +18,16 @@ class Experiment(object):
 
     clf = xgb.XGBClassifier(
         learning_rate=0.1,
-        n_estimators=55,
-        max_depth=9,
-        min_child_weight=5,
-        gamma=0.2,
+        n_estimators=101,
+        max_depth=3,
+        min_child_weight=3,
+        gamma=0.3,
         subsample=0.9,
-        colsample_bytree=0.8,
+        colsample_bytree=0.6,
+        scale_pos_weight=1,
+        reg_alpha=0.01,
         objective='binary:logistic',
         nthread=data.N_JOBS,
-        scale_pos_weight=2,
-        reg_alpha=1e-6,
         random_state=42)
 
     def __init__(self, experiment_name, data_loader, training_ids, validation_ids=None):
@@ -148,7 +148,7 @@ def max_consecutive_nans(a):
 
 if __name__ == '__main__':
 
-    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='comprehensive')
+    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
 
     Experiment('top', dl, trial_sets.top_ids)
 

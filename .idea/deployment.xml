@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="caleb@10.70.20.182:22" showNewOnSourceInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="caleb@10.70.20.183:22" showNewOnSourceInSync="false">
     <serverData>
-      <paths name="caleb@10.70.20.182:22">
+      <paths name="caleb@10.70.20.183:22">
         <serverdata>
           <mappings>
-            <mapping deploy="/mnt/FS1/caleb/ppg" local="$PROJECT_DIR$" />
+            <mapping deploy="/mnt/FS1/caleb/PPGDataAnalysis" local="$PROJECT_DIR$" />
           </mappings>
+          <excludedPaths>
+            <excludedPath path="/mnt/FS1/caleb/PPGDataAnalysis/local-cache/features" />
+            <excludedPath path="/mnt/FS1/caleb/PPGDataAnalysis/local-cache/data" />
+          </excludedPaths>
         </serverdata>
       </paths>
     </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
   </component>
 </project>
