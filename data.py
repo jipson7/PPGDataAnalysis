@@ -56,16 +56,15 @@ def normalize_timestamps(dataframes):
     new_data = [[] for _ in range(len(dataframes))]
     df_start, df_end = get_common_endpoints(dataframes)
     sample_date = df_start
-    sample_count = 0
-    while sample_date < df_end and sample_count < SAMPLE_LIMIT:
+    while sample_date < df_end:
         for i, df in enumerate(dataframes):
             data = df.iloc[df.index.get_loc(sample_date, method='nearest')].values
             new_data[i].append(data)
         indices.append(sample_date)
         sample_date += sample_range
-        sample_count += 1
     result = []
     for df, data in zip(dataframes, new_data):
+        data = data[-SAMPLE_LIMIT:]
         result.append(pd.DataFrame(data=data, index=indices, columns=df.columns.values))
     return result
 
