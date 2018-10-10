@@ -58,7 +58,7 @@ def tune():
     training_ids = trial_sets.top_ids[:-validation_set_count]
     validation_ids = trial_sets.top_ids[-validation_set_count:]
 
-    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='comprehensive')
+    dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='efficient')
     optimize_classifier(training_ids, validation_ids, dl)
 
 

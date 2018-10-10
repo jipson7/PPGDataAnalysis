@@ -3,7 +3,6 @@ import pandas as pd
 import pickle
 import warnings
 import os
-import gc
 import pathlib
 from server import app
 from models import Trial
@@ -278,7 +277,6 @@ class DataLoader:
                                  default_fc_parameters=features)
             impute(X)
             pickle.dump(X, open(pickle_path, "wb"))
-            gc.collect()
             return X
 
     def __str__(self):
