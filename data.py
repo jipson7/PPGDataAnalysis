@@ -16,6 +16,7 @@ from tsfresh.feature_selection.relevance import calculate_relevance_table
 
 np.random.seed(42)
 N_JOBS = 24
+SAMPLE_LIMIT = 18000
 CACHE_ROOT = './local-cache/'
 CM_CACHE = CACHE_ROOT + 'cms/'
 DATA_CACHE = CACHE_ROOT + 'data/'
@@ -55,12 +56,14 @@ def normalize_timestamps(dataframes):
     new_data = [[] for _ in range(len(dataframes))]
     df_start, df_end = get_common_endpoints(dataframes)
     sample_date = df_start
-    while sample_date < df_end:
+    sample_count = 0
+    while sample_date < df_end and sample_count < SAMPLE_LIMIT:
         for i, df in enumerate(dataframes):
             data = df.iloc[df.index.get_loc(sample_date, method='nearest')].values
             new_data[i].append(data)
         indices.append(sample_date)
         sample_date += sample_range
+        sample_count += 1
     result = []
     for df, data in zip(dataframes, new_data):
         result.append(pd.DataFrame(data=data, index=indices, columns=df.columns.values))
