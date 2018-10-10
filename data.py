@@ -270,6 +270,7 @@ class DataLoader:
                 features = MinimalFCParameters()
             else:
                 raise RuntimeError("Invalid feature type")
+            print("Extracting features for trial " + str(trial_id))
             X = extract_features(X_windowed, column_id='id',
                                  column_sort='time',
                                  n_jobs=N_JOBS,

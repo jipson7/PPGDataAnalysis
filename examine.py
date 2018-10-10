@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
 import pandas as pd
+import trial_sets
 
 
 def print_stats(trial_id, dl):
@@ -70,7 +71,7 @@ def visualize_classifier_results(training_ids, test_id, dl):
 
 def print_all_stats():
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='comprehensive')
-    for trial_id in data.list_trials():
+    for trial_id in trial_sets.top_ids:
         print("\nStats for trial: {}".format(trial_id))
         print_stats(trial_id, dl)
 
