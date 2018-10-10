@@ -65,6 +65,7 @@ def normalize_timestamps(dataframes):
     result = []
     for df, data in zip(dataframes, new_data):
         data = data[-SAMPLE_LIMIT:]
+        indices = indices[-SAMPLE_LIMIT:]
         result.append(pd.DataFrame(data=data, index=indices, columns=df.columns.values))
     return result
 
