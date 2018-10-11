@@ -39,17 +39,18 @@ def visualize_classifier_results(training_ids, test_id, dl):
     X_test, y_test = dl.load([test_id], iid=False)
 
     clf = xgb.XGBClassifier(
-        learning_rate=0.015,
-        n_estimators=250,
-        max_depth=5,
-        min_child_weight=5,
-        gamma=0.0,
-        subsample=0.8,
-        colsample_bytree=0.9,
+        learning_rate=0.1,
+        n_estimators=101,
+        max_depth=3,
+        min_child_weight=3,
+        gamma=0.3,
+        subsample=0.9,
+        colsample_bytree=0.6,
+        scale_pos_weight=1,
+        reg_alpha=0.01,
         objective='binary:logistic',
         nthread=data.N_JOBS,
-        scale_pos_weight=3,
-        reg_alpha=1e-6)
+        random_state=42)
 
     clf.fit(X_train, y_train)
     y_pred = clf.predict(X_test)
@@ -63,7 +64,7 @@ def visualize_classifier_results(training_ids, test_id, dl):
     assert(graph_df.shape[0] == wrist_oxygen.shape[0])
 
     graph_df.plot.line(color=['red', 'blue', 'yellow'])
-    plt.xlabel("Time")
+    plt.xlabel("Time (Milliseconds)")
     plt.ylabel("SpO2 (%)")
     plt.ylim()
     plt.savefig(data.GRAPH_CACHE + 'classifier-{}-{}.png'.format(test_id, str(dl)))
@@ -71,13 +72,14 @@ def visualize_classifier_results(training_ids, test_id, dl):
 
 def print_all_stats():
     dl = data.DataLoader(window_size=100, threshold=1.0, algo_name='enhanced', features='comprehensive')
-    for trial_id in trial_sets.top_ids:
+    for trial_id in trial_sets.top_ids + trial_sets.bonus_top_ids:
         print("\nStats for trial: {}".format(trial_id))
         print_stats(trial_id, dl)
 
 
 def visualize_all_classifier_results():
-    trial_ids = [22, 23, 24, 29, 31, 32, 33, 36, 40, 43]
+
+    trial_ids = trial_sets.top_ids
 
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
 
@@ -88,5 +90,7 @@ def visualize_all_classifier_results():
 
         visualize_classifier_results(training_ids, trial_id, dl)
 
+
 if __name__ == '__main__':
     print_all_stats()
+    # visualize_all_classifier_results()

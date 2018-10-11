@@ -1,3 +1,3 @@
 #!/bin/bash
 
-rsync -ruv analysis:/home   /caleb/ppg/local-cache/* ./local-cache/
+rsync -ruv --exclude data --exclude features mel23:/mnt/FS1/caleb/PPGDataAnalysis/local-cache/* ./local-cache/

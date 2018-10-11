@@ -116,13 +116,15 @@ class DataLoader:
 
     def __init__(self, window_size=100,
                  threshold=1.0, algo_name='maxim',
-                 features='comprehensive', feature_limit=None):
+                 features='comprehensive', feature_limit=None,
+                 motion=True):
         self.window_size = window_size
         self.threshold = threshold
         self.algo = algo_name
         self.feature_type = features
         self.selected_features = None
         self.feature_limit = feature_limit
+        self.motion = motion
 
     def load(self, trial_ids, iid=True):
         X_s = []
@@ -253,14 +255,20 @@ class DataLoader:
 
     def _extract_features(self, devices, trial_id):
 
-        pickle_path = FEATURE_CACHE + 'X{}-{}-{}.pickle'.format(trial_id, self.window_size, self.feature_type)
+        if self.motion:
+            pickle_path = FEATURE_CACHE + 'X{}-{}-{}.pickle'.format(trial_id, self.window_size, self.feature_type)
+        else:
+            pickle_path = FEATURE_CACHE + 'X{}-{}-{}-no-motion.pickle'.format(trial_id, self.window_size, self.feature_type)
 
         if os.path.isfile(pickle_path):
             return pickle.load(open(pickle_path, "rb"))
         else:
 
             wrist_device = devices[0]
-            input_columns = ['red', 'ir', 'gyro', 'accel']
+            if self.motion:
+                input_columns = ['red', 'ir', 'gyro', 'accel']
+            else:
+                input_columns = ['red', 'ir']
             X_raw = wrist_device[input_columns]
 
             X_windowed = self._windowize_tsfresh(X_raw)
