@@ -147,12 +147,8 @@ def max_consecutive_nans(a):
 
 
 if __name__ == '__main__':
-
-    #         for t in [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 5.0]:
-
-    for w in [25, 50, 100, 150, 200]:
-        dl = data.DataLoader(window_size=w, threshold=2.0, algo_name='enhanced', features='comprehensive')
-        Experiment('top', dl, trial_sets.top_ids)
+    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
+    Experiment('top', dl, trial_sets.top_ids)
 
     # Experiment('bottom', dl, trial_sets.bottom_ids)
     # Experiment('top-bottom', dl, trial_sets.top_ids, validation_ids=trial_sets.bottom_ids)
