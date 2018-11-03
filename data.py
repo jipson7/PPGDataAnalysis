@@ -181,6 +181,13 @@ class DataLoader:
 
         return wrist_oxygen, pruned_oxygen, fingertip_oxygen
 
+    def load_all_oxygen(self, trial_id):
+        devices = self._load_devices(trial_id)
+        wrist_oxygen = pd.DataFrame(self._extract_label(devices[0])).values.flatten()
+        fingertip_oxygen = pd.DataFrame(self._extract_label(devices[1])).values.flatten()
+        transitive_oxygen = pd.DataFrame(self._extract_label(devices[2])).values.flatten()
+        return wrist_oxygen, fingertip_oxygen, transitive_oxygen
+
     def _load_devices(self, trial_id):
         pickle_path = DATA_CACHE + "{}-{}.pickle".format(trial_id, self.algo)
         if os.path.isfile(pickle_path):

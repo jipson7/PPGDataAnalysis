@@ -63,6 +63,7 @@ MarkupSafe = "==1.0"
 PyYAML = "==3.13"
 SQLAlchemy = "==1.2.12"
 Werkzeug = "==0.14.1"
+pycompare = "*"
 
 [dev-packages]
 

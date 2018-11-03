@@ -101,6 +101,51 @@ def visualize_all_classifier_results():
         visualize_classifier_results(training_ids, trial_id, dl)
 
 
+def create_error_cdf():
+    THRESHOLD = 2.0
+    dl_enhanced = data.DataLoader(window_size=100, threshold=THRESHOLD, algo_name='enhanced', features='comprehensive')
+    dl_maxim = data.DataLoader(window_size=100, threshold=THRESHOLD, algo_name='maxim', features='comprehensive')
+
+    maxim_errors = []
+    enhanced_errors = []
+
+    for trial_id in trial_sets.top_ids:
+        wrist_enhanced, _, fingertip_enhanced = dl_enhanced.load_oxygen(trial_id, iid=False)
+        wrist_maxim, _, fingertip_maxim = dl_maxim.load_oxygen(trial_id)
+
+        wrist_maxim = wrist_maxim.values.flatten()
+        wrist_enhanced = wrist_enhanced.values.flatten()
+        fingertip_maxim = fingertip_maxim.values.flatten()
+        fingertip_enhanced = fingertip_enhanced.values.flatten()
+
+        for oM, oE, oMF, oEF in zip(wrist_maxim, wrist_enhanced, fingertip_maxim, fingertip_enhanced):
+            maxim_errors.append(np.abs(np.subtract(oM, oMF)))
+            enhanced_errors.append(np.abs(np.subtract(oE, oMF)))
+
+    maxim_errors = np.array(maxim_errors)
+    enhanced_errors = np.array(enhanced_errors)
+    maxim_errors = maxim_errors[~np.isnan(maxim_errors)]
+    enhanced_errors = enhanced_errors[~np.isnan(enhanced_errors)]
+    rmses = [maxim_errors, enhanced_errors]
+
+    plt.figure()
+
+    for e in rmses:
+        sorted_data = np.sort(e)
+        yvals = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
+        plt.plot(sorted_data, yvals)
+
+    plt.legend(['Baseline', 'Enhanced'])
+    plt.ylim(0.0, 1.0)
+    # plt.xlim(0.0, 10.0)
+    plt.xlabel('MAE')
+
+    plt.savefig(data.GRAPH_CACHE + 'cdf-error-all.png')
+
+
+
+
 if __name__ == '__main__':
     # print_all_stats()
-    visualize_all_classifier_results()
+    # visualize_all_classifier_results()
+    create_error_cdf()
