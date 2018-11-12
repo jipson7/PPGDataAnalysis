@@ -32,5 +32,5 @@ if ROUND_NUM:
 
 savePath = data.GRAPH_CACHE + savePath
 
-blandAltman(reflective_valid, transitive_valid, savePath=savePath)
+blandAltman(reflective_valid, transitive_valid)
 

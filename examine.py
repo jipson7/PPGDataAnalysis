@@ -143,9 +143,36 @@ def create_error_cdf():
     plt.savefig(data.GRAPH_CACHE + 'cdf-error-all.png')
 
 
+def create_fingertip_cdf():
+    THRESHOLD = 2.0
+    dl = data.DataLoader(window_size=100, threshold=THRESHOLD, algo_name='enhanced', features='comprehensive')
+
+    fingertip_error = []
+
+    for trial_id in trial_sets.top_ids:
+        wrist_oxygen, fingertip_oxygen, transitive_oxygen = dl.load_all_oxygen(trial_id)
+
+        for oF, oT in zip(fingertip_oxygen, transitive_oxygen):
+            fingertip_error.append(np.abs(np.subtract(oF, oT)))
+
+    fingertip_error = np.array(fingertip_error)
+    fingertip_error = fingertip_error[~np.isnan(fingertip_error)]
+
+    plt.figure()
+
+    sorted_data = np.sort(fingertip_error)
+    yvals = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
+    plt.plot(sorted_data, yvals)
+
+    # plt.legend(['Baseline', 'Enhanced'])
+    plt.ylim(0.0, 1.0)
+    plt.xlabel('MAE')
+
+    plt.savefig(data.GRAPH_CACHE + 'cdf-fingertip.png')
 
 
 if __name__ == '__main__':
     # print_all_stats()
     # visualize_all_classifier_results()
-    create_error_cdf()
+    # create_error_cdf()
+    create_fingertip_cdf()
