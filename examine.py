@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import xgboost as xgb
 import pandas as pd
+import csv
+
 import trial_sets
 
 
@@ -149,10 +151,17 @@ def create_fingertip_cdf():
 
     fingertip_error = []
 
+    csv_file = open(data.GRAPH_CACHE + 'csv-fingertip.csv', 'w')
+
+    csvwriter = csv.writer(csv_file, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
+
+    csvwriter.writerow(['reflective', 'transitive'])
+
     for trial_id in trial_sets.top_ids:
         wrist_oxygen, fingertip_oxygen, transitive_oxygen = dl.load_all_oxygen(trial_id)
 
         for oF, oT in zip(fingertip_oxygen, transitive_oxygen):
+            csvwriter.writerow([oF, oT])
             fingertip_error.append(np.abs(np.subtract(oF, oT)))
 
     fingertip_error = np.array(fingertip_error)
@@ -169,6 +178,8 @@ def create_fingertip_cdf():
     plt.xlabel('MAE')
 
     plt.savefig(data.GRAPH_CACHE + 'cdf-fingertip.png')
+
+    csv_file.close()
 
 
 if __name__ == '__main__':
