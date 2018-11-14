@@ -5,11 +5,13 @@ import numpy as np
 import xgboost as xgb
 from sklearn.metrics import confusion_matrix, precision_score
 import trial_sets
-
 matplotlib.use('Agg')
+
+from matplotlib2tikz import save as tikz_save
+
 import matplotlib.pyplot as plt
 import data
-from data import CM_CACHE, EXPERIMENT_CACHE, GRAPH_CACHE
+from data import CM_CACHE, EXPERIMENT_CACHE, GRAPH_CACHE, LTX_CACHE
 
 
 class Experiment(object):
@@ -95,18 +97,22 @@ class Experiment(object):
         avg_cm = np.array(avg_cm).astype(int)
         data.plot_confusion_matrix(avg_cm)
         plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.png')
+        tikz_save(LTX_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.tex')
 
         plot_cdf(rmse_befores, dl.algo.upper() + " Algorithm RMSE")
         log.write("RMSE before: {}\n".format(rmse_befores))
         plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-before.png'.format(self.experiment_name, self.dl))
+        tikz_save(LTX_CACHE + 'cdf-{}-{}-rmse-before.tex'.format(self.experiment_name, self.dl))
 
         plot_cdf(rmse_afters, "Pruned RMSE")
         log.write("RMSE After: {}\n".format(rmse_afters))
         plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-after.png'.format(self.experiment_name, self.dl))
+        tikz_save(LTX_CACHE + 'cdf-{}-{}-rmse-after.tex'.format(self.experiment_name, self.dl))
 
         plot_cdf(nans, "Time Between Readings (Seconds)")
         log.write("TIme Between readings: {}\n".format(nans))
         plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-readings.png'.format(self.experiment_name, self.dl))
+        tikz_save(LTX_CACHE + 'cdf-{}-{}-readings.tex'.format(self.experiment_name, self.dl))
 
         log.write("Median Precision {}\n".format(np.nanmedian(precisions)))
         log.write("Median RMSE before {}\n".format(np.nanmedian(rmse_befores)))
@@ -147,7 +153,7 @@ def max_consecutive_nans(a):
 
 
 if __name__ == '__main__':
-    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive', feature_limit=50)
+    dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
     Experiment('top', dl, trial_sets.top_ids)
 
     # Experiment('bottom', dl, trial_sets.bottom_ids)

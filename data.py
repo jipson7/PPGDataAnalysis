@@ -23,11 +23,12 @@ DATA_CACHE = CACHE_ROOT + 'data/'
 EXPERIMENT_CACHE = CACHE_ROOT + 'experiments/'
 FEATURE_CACHE = CACHE_ROOT + 'features/'
 GRAPH_CACHE = CACHE_ROOT + 'graphs/'
+LTX_CACHE = CACHE_ROOT + 'ltx/'
 
 warnings.filterwarnings('ignore')
 
 
-caches = [CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE, FEATURE_CACHE, GRAPH_CACHE]
+caches = [CM_CACHE, DATA_CACHE, EXPERIMENT_CACHE, FEATURE_CACHE, GRAPH_CACHE, LTX_CACHE]
 
 for cache in caches:
     pathlib.Path(cache).mkdir(parents=True, exist_ok=True)
@@ -157,9 +158,9 @@ class DataLoader:
         print("Data loaded for trials: " + ', '.join([str(x) for x in trial_ids]))
         print("X shape: {}, y shape: {}".format(X.shape, y.shape))
         print_label_counts(y)
-        print("Features used: ")
-        from pprint import pprint
-        pprint(self.selected_features)
+        # print("Features used: ")
+        # from pprint import pprint
+        # pprint(self.selected_features)
         return X, y
 
     def load_oxygen(self, trial_id, y_pred=None, iid=True):
