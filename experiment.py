@@ -1,6 +1,7 @@
 import math
 import datetime
 import matplotlib
+
 import numpy as np
 import xgboost as xgb
 from sklearn.metrics import confusion_matrix, precision_score
@@ -65,9 +66,9 @@ class Experiment(object):
             X_test, y_test = self.dl.load([test_id], iid=self.iid)
             y_pred = self.clf.predict(X_test)
             # Get Precision Scores
-            precision_weighted = precision_score(y_test, y_pred, average='weighted')
+            precision_weighted = precision_score(y_test, y_pred)
             precisions.append(precision_weighted)
-            log.write("Precision Weighted {0:.1%}\n".format(precision_weighted))
+            log.write("Precision {0:.1%}\n".format(precision_weighted))
 
             # Create confusion matrix
             cm = confusion_matrix(y_test, y_pred)
@@ -95,24 +96,25 @@ class Experiment(object):
 
         avg_cm = np.average(cms, axis=0)
         avg_cm = np.array(avg_cm).astype(int)
+        # stddev_cm = np.std(cms, axis=0)
+        # stddev_cm = np.array(stddev_cm).astype(int)
         data.plot_confusion_matrix(avg_cm)
-        plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.png')
-        tikz_save(LTX_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.tex')
+        plt.savefig(CM_CACHE + 'cm-' + str(dl) + '-' + self.experiment_name + '.pdf', bbox_inches='tight')
 
         plot_cdf(rmse_befores, dl.algo.upper() + " Algorithm RMSE")
         log.write("RMSE before: {}\n".format(rmse_befores))
-        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-before.png'.format(self.experiment_name, self.dl))
-        tikz_save(LTX_CACHE + 'cdf-{}-{}-rmse-before.tex'.format(self.experiment_name, self.dl))
+        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-before.pdf'.format(self.experiment_name, self.dl))
+        # tikz_save(LTX_CACHE + 'cdf-{}-{}-rmse-before.tex'.format(self.experiment_name, self.dl))
 
         plot_cdf(rmse_afters, "Pruned RMSE")
         log.write("RMSE After: {}\n".format(rmse_afters))
-        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-after.png'.format(self.experiment_name, self.dl))
-        tikz_save(LTX_CACHE + 'cdf-{}-{}-rmse-after.tex'.format(self.experiment_name, self.dl))
+        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-rmse-after.pdf'.format(self.experiment_name, self.dl))
+        # tikz_save(LTX_CACHE + 'cdf-{}-{}-rmse-after.tex'.format(self.experiment_name, self.dl))
 
         plot_cdf(nans, "Time Between Readings (Seconds)")
         log.write("TIme Between readings: {}\n".format(nans))
-        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-readings.png'.format(self.experiment_name, self.dl))
-        tikz_save(LTX_CACHE + 'cdf-{}-{}-readings.tex'.format(self.experiment_name, self.dl))
+        plt.savefig(GRAPH_CACHE + 'cdf-{}-{}-readings.pdf'.format(self.experiment_name, self.dl))
+        # tikz_save(LTX_CACHE + 'cdf-{}-{}-readings.tex'.format(self.experiment_name, self.dl))
 
         log.write("Median Precision {}\n".format(np.nanmedian(precisions)))
         log.write("Median RMSE before {}\n".format(np.nanmedian(rmse_befores)))
@@ -124,16 +126,22 @@ class Experiment(object):
         log.write("Mean RMSE after {}\n".format(np.nanmean(rmse_afters)))
         log.write("Mean Time between readings {} (seconds)\n".format(np.nanmean(nans)))
 
+        log.write("Std Dev Precision {}\n".format(np.nanstd(precisions)))
+        log.write("Std Dev RMSE before {}\n".format(np.nanstd(rmse_befores)))
+        log.write("Std Dev RMSE after {}\n".format(np.nanstd(rmse_afters)))
+        log.write("Std Dev Time between readings {} (seconds)\n".format(np.nanstd(nans)))
+
         log.close()
 
 
 def plot_cdf(data, title):
-    plt.figure()
+    plt.figure(figsize=(4, 2))
     sorted_data = np.sort(data)
     yvals=np.arange(len(sorted_data))/float(len(sorted_data)-1)
     plt.plot(sorted_data,yvals)
     plt.ylim(0.0, 1.0)
     plt.xlabel(title)
+    plt.tight_layout()
 
 
 def rmse(d1, d2):
@@ -153,6 +161,7 @@ def max_consecutive_nans(a):
 
 
 if __name__ == '__main__':
+
     dl = data.DataLoader(window_size=100, threshold=2.0, algo_name='enhanced', features='comprehensive')
     Experiment('top', dl, trial_sets.top_ids)
 
@@ -163,8 +172,10 @@ if __name__ == '__main__':
     # Experiment('light-dark', dl, trial_sets.top_light_ids, validation_ids=trial_sets.top_dark_ids)
     # Experiment('dark-light', dl, trial_sets.top_dark_ids, validation_ids=trial_sets.top_light_ids)
 
-    # Experiment('no-motion', dl, trial_sets.top_ids)
+    # Experiment('motion-only', dl, trial_sets.top_ids)
 
-    # Experiment('self', dl, [13], validation_ids=[47])
+    # Experiment('self', dl, trial_sets.top_ids, validation_ids=[23])
+    # Experiment('self-calibrated', dl, trial_sets.top_ids + [13], validation_ids=[23])
+    # Experiment('self-more-calibrated', dl, trial_sets.top_ids + [13, 20], validation_ids=[23])
 
 

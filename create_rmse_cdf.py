@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from data import GRAPH_CACHE
+from data import GRAPH_CACHE, LTX_CACHE
+from matplotlib2tikz import save as tikz_save
 
 
 maxim_rmse = [7.938651027739539, 26.517663579218432, 8.345735088481492, 5.127334300851506, 15.194416386840667, 15.491406008163652, 20.714832127599003, 14.708403628609288, 23.40337422609582, 7.669531531557288]
@@ -18,8 +19,9 @@ for data in rmses:
     yvals = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
     plt.plot(sorted_data, yvals)
 
-plt.legend(['Baseline', 'Enhanced', 'After Classification'])
+plt.legend(['Baseline', 'Enhanced', 'WristO2'])
 plt.ylim(0.0, 1.0)
 plt.xlabel('RMSE')
 
-plt.savefig(GRAPH_CACHE + 'cdf-rmse.png')
+plt.savefig(GRAPH_CACHE + 'cdf-rmse.pdf')
+tikz_save(LTX_CACHE + 'cdf-rmse.tex')

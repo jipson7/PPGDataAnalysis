@@ -80,12 +80,13 @@ def print_label_counts(y):
 
 def plot_confusion_matrix(cm,
                           normalize=False,
+                          stddev=None,
                           cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
     Normalization can be applied by setting `normalize=True`.
     """
-    classes = sorted([True, False])
+    classes = ['Unreliable', 'Reliable']
     plt.figure()
     if normalize:
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
@@ -99,7 +100,10 @@ def plot_confusion_matrix(cm,
     fmt = '.2f' if normalize else 'd'
     thresh = cm.max() / 2.
     for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
+        txt = format(cm[i, j], fmt)
+        if stddev is not None:
+            txt += '(±' + str(stddev[i, j]) + ')'
+        plt.text(j, i, txt,
                  horizontalalignment="center",
                  color="white" if cm[i, j] > thresh else "black")
 
@@ -266,18 +270,21 @@ class DataLoader:
 
     def _extract_features(self, devices, trial_id):
 
-        if self.motion:
+        if self.motion == True:
             pickle_path = FEATURE_CACHE + 'X{}-{}-{}.pickle'.format(trial_id, self.window_size, self.feature_type)
+        elif self.motion == 'only':
+            pickle_path = FEATURE_CACHE + 'X{}-{}-{}-motion-only.pickle'.format(trial_id, self.window_size, self.feature_type)
         else:
             pickle_path = FEATURE_CACHE + 'X{}-{}-{}-no-motion.pickle'.format(trial_id, self.window_size, self.feature_type)
-
         if os.path.isfile(pickle_path):
             return pickle.load(open(pickle_path, "rb"))
         else:
 
             wrist_device = devices[0]
-            if self.motion:
+            if self.motion == True:
                 input_columns = ['red', 'ir', 'gyro', 'accel']
+            elif self.motion == 'only':
+                input_columns = ['gyro', 'accel']
             else:
                 input_columns = ['red', 'ir']
             X_raw = wrist_device[input_columns]

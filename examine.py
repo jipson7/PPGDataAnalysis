@@ -5,6 +5,8 @@ import xgboost as xgb
 import pandas as pd
 import csv
 
+from matplotlib2tikz import save as tikz_save
+
 import trial_sets
 
 
@@ -37,7 +39,6 @@ def print_stats(trial_id, dl):
 
 def visualize_classifier_results(training_ids, test_id, dl, show_classifier=True):
 
-
     if show_classifier:
         X_train, y_train = dl.load(training_ids, iid=True)
         X_test, y_test = dl.load([test_id], iid=False)
@@ -55,6 +56,7 @@ def visualize_classifier_results(training_ids, test_id, dl, show_classifier=True
             objective='binary:logistic',
             nthread=data.N_JOBS,
             random_state=42)
+
         clf.fit(X_train, y_train)
         y_pred = clf.predict(X_test)
     else:
@@ -62,24 +64,30 @@ def visualize_classifier_results(training_ids, test_id, dl, show_classifier=True
 
     wrist_oxygen, wrist_oxygen_clean, true_oxygen = dl.load_oxygen(test_id, y_pred=y_pred, iid=False)
 
+    wrist_oxygen = wrist_oxygen[::5]
+    wrist_oxygen_clean = wrist_oxygen_clean[::5]
+    true_oxygen = true_oxygen[::5]
+
     if show_classifier:
         graph_df = pd.concat([wrist_oxygen, true_oxygen, wrist_oxygen_clean], axis=1, sort=True)
-        colors = ['red', 'blue', 'yellow']
     else:
         graph_df = pd.concat([wrist_oxygen, true_oxygen], axis=1, sort=True)
-        colors = ['red', 'blue']
 
     assert(wrist_oxygen.shape == true_oxygen.shape)
     assert(graph_df.shape[0] == wrist_oxygen.shape[0])
 
-    graph_df.plot.line(color=colors)
+    # plt.figure(figsize=(4 * 1.2, 3 * 1.2))
+
+    graph_df.plot.line(figsize=(4 * 1.2, 2 * 1.2))
     plt.xlabel("Time (Milliseconds)")
     plt.ylabel("SpO2 (%)")
     plt.ylim()
+    plt.legend(loc='lower left')
     if show_classifier:
-        plt.savefig(data.GRAPH_CACHE + 'classifier-{}-{}.png'.format(test_id, str(dl)))
+        plt.savefig(data.GRAPH_CACHE + 'classifier-{}-{}.pdf'.format(test_id, str(dl)))
+        tikz_save(data.LTX_CACHE + 'classifier-{}-{}.tex'.format(test_id, str(dl)))
     else:
-        plt.savefig(data.GRAPH_CACHE + 'algos-{}-{}.png'.format(test_id, str(dl)))
+        plt.savefig(data.GRAPH_CACHE + 'algos-{}-{}.pdf'.format(test_id, str(dl)))
 
 
 def print_all_stats():
@@ -110,39 +118,68 @@ def create_error_cdf():
 
     maxim_errors = []
     enhanced_errors = []
+    wristo_errors = []
 
     for trial_id in trial_sets.top_ids:
-        wrist_enhanced, _, fingertip_enhanced = dl_enhanced.load_oxygen(trial_id, iid=False)
-        wrist_maxim, _, fingertip_maxim = dl_maxim.load_oxygen(trial_id)
+
+        training_ids = trial_sets.top_ids.copy()
+        training_ids.remove(trial_id)
+        X_train, y_train = dl_enhanced.load(training_ids, iid=True)
+        X_test, y_test = dl_enhanced.load([trial_id], iid=False)
+
+        clf = xgb.XGBClassifier(
+            learning_rate=0.1,
+            n_estimators=101,
+            max_depth=3,
+            min_child_weight=3,
+            gamma=0.3,
+            subsample=0.9,
+            colsample_bytree=0.6,
+            scale_pos_weight=1,
+            reg_alpha=0.01,
+            objective='binary:logistic',
+            nthread=data.N_JOBS,
+            random_state=42)
+
+        clf.fit(X_train, y_train)
+        y_pred = clf.predict(X_test)
+
+        wrist_enhanced, wrist_clean, fingertip_enhanced = dl_enhanced.load_oxygen(trial_id, y_pred=y_pred, iid=False)
+        wrist_maxim, _, fingertip_maxim = dl_maxim.load_oxygen(trial_id, iid=False)
 
         wrist_maxim = wrist_maxim.values.flatten()
         wrist_enhanced = wrist_enhanced.values.flatten()
         fingertip_maxim = fingertip_maxim.values.flatten()
         fingertip_enhanced = fingertip_enhanced.values.flatten()
+        wrist_clean = wrist_clean.values.flatten()
 
-        for oM, oE, oMF, oEF in zip(wrist_maxim, wrist_enhanced, fingertip_maxim, fingertip_enhanced):
+        for oM, oE, oMF, oEF, oC in zip(wrist_maxim, wrist_enhanced, fingertip_maxim, fingertip_enhanced, wrist_clean):
             maxim_errors.append(np.abs(np.subtract(oM, oMF)))
             enhanced_errors.append(np.abs(np.subtract(oE, oMF)))
+            wristo_errors.append(np.abs(np.subtract(oC, oMF)))
 
     maxim_errors = np.array(maxim_errors)
     enhanced_errors = np.array(enhanced_errors)
+    wristo_errors = np.array(wristo_errors)
     maxim_errors = maxim_errors[~np.isnan(maxim_errors)]
     enhanced_errors = enhanced_errors[~np.isnan(enhanced_errors)]
-    rmses = [maxim_errors, enhanced_errors]
+    wristo_errors = wristo_errors[~np.isnan(wristo_errors)]
+    rmses = [maxim_errors, enhanced_errors, wristo_errors]
 
-    plt.figure()
+    plt.figure(figsize=(4 * 1.2, 2 * 1.2))
 
     for e in rmses:
         sorted_data = np.sort(e)
         yvals = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
         plt.plot(sorted_data, yvals)
 
-    plt.legend(['Baseline', 'Enhanced'])
+    plt.legend(['Baseline', 'Enhanced', 'WristO2'])
     plt.ylim(0.0, 1.0)
-    # plt.xlim(0.0, 10.0)
-    plt.xlabel('MAE')
+    plt.xlim(0.0, 10.0)
+    plt.xlabel('Absolute Error')
 
-    plt.savefig(data.GRAPH_CACHE + 'cdf-error-all.png')
+    plt.savefig(data.GRAPH_CACHE + 'cdf-error-algo.pdf')
+    tikz_save(data.LTX_CACHE + 'cdf-error-algo.tex')
 
 
 def create_fingertip_cdf():
@@ -162,12 +199,13 @@ def create_fingertip_cdf():
 
         for oF, oT in zip(fingertip_oxygen, transitive_oxygen):
             csvwriter.writerow([oF, oT])
-            fingertip_error.append(np.abs(np.subtract(oF, oT)))
+            fingertip_error.append(np.square(np.subtract(oF, oT)))
 
     fingertip_error = np.array(fingertip_error)
     fingertip_error = fingertip_error[~np.isnan(fingertip_error)]
 
     plt.figure()
+
 
     sorted_data = np.sort(fingertip_error)
     yvals = np.arange(len(sorted_data)) / float(len(sorted_data) - 1)
@@ -175,15 +213,15 @@ def create_fingertip_cdf():
 
     # plt.legend(['Baseline', 'Enhanced'])
     plt.ylim(0.0, 1.0)
-    plt.xlabel('MAE')
+    plt.xlabel('RMSE')
 
-    plt.savefig(data.GRAPH_CACHE + 'cdf-fingertip.png')
+    plt.savefig(data.GRAPH_CACHE + 'cdf-fingertip.pdf')
 
     csv_file.close()
 
 
 if __name__ == '__main__':
     # print_all_stats()
-    # visualize_all_classifier_results()
-    # create_error_cdf()
-    create_fingertip_cdf()
+    visualize_all_classifier_results()
+    create_error_cdf()
+    # create_fingertip_cdf()
